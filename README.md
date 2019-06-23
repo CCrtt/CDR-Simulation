@@ -1,7 +1,7 @@
 # CDR-Simulation
 Ce projet simule le mouvement d'un robot et recherche une trajectoire grâce a un algorithme génétique
 
-Il a été réalisé dans le cadre de la participation à la cooupe de robotique avec AREM.
+Il a été réalisé dans le cadre de la participation à la coupe de robotique avec AREM.
 
 ## Prérequis
  
