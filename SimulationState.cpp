@@ -14,7 +14,7 @@ void SimulationState::initBackGround()
 			static_cast<float>(this->window->getSize().y)
 		)
 	);
-	if (!this->backGroundTexture.loadFromFile("Capture.png"))
+	if (!this->backGroundTexture.loadFromFile("Ressources/Images/Terrain.png"))
 	{
 		std::cout << "loading error" << std::endl;
 	}
@@ -32,19 +32,6 @@ void SimulationState::initRobot()
 	{
 		m_robotTeamPurple.push_back(new robot(2, team::YELLOW));
 	}
-
-	for (int i = 0; i < m_robotTeamPurple.size(); ++i)
-	{
-		m_robotTeamPurple[i]->startGen(0, 0);
-	}
-
-	for (int i = 0; i < m_robotTeamYellow.size(); ++i)
-	{
-		m_robotTeamYellow[i]->startGen(0, 0);
-	}
-
-	//this->robot1.startGen(robot2.getX(), robot2.getY());
-	//this->robot2.startGen(robot1.getX(), robot1.getY());
 
 	this->frameTime = frameClock.getElapsedTime();
 	this->genTime = genClock.getElapsedTime();
@@ -69,23 +56,6 @@ SimulationState::~SimulationState()
 	}
 }
 
-/*std::vector<Point> SimulationState::posRobots()
-{
-	std::vector<Point> ret;
-
-	for (int i = 0; i < m_robotTeamPurple.size(); ++i)
-	{
-		ret.push_back(m_robotTeamPurple[i]->getPos());
-	}
-
-	for (int i = 0; i < m_robotTeamYellow.size(); ++i)
-	{
-		ret.push_back(m_robotTeamYellow[i]->getPos());
-	}
-
-	return ret;
-}*/
-
 void SimulationState::updateInput(const float& dt)
 {
 }
@@ -109,54 +79,6 @@ void SimulationState::update(const float& dt, const float wheelTicks)
 
 		}
 
-		/*while (frameTime.asMilliseconds() < 17) // 17 correspond au nombre de milisecondes qu'il faut attendre pour afficher 60 FPS
-		{
-			//utilisation de l'algo gen
-			if (genTime.asMilliseconds() < TEMPS_GEN) // TEMPS_GEN correspond au temps dont dispose le robot pour trouver une trajectoire avant de reactualiser ses entrees
-			{
-				for (int i = 0; i < 20; i++)
-				{
-					for (int i = 0; i < m_robotTeamPurple.size(); ++i)
-					{
-						m_robotTeamPurple[i]->genSol();
-					}
-
-					for (int i = 0; i < m_robotTeamYellow.size(); ++i)
-					{
-						m_robotTeamYellow[i]->genSol();
-					}
-					//robot1.genSol(); // generation d'une nouvelle solution
-					//robot2.genSol();
-					//std::cout << "generation d'une nouvelle solution" << std::endl;
-				}
-			}
-			else
-			{
-				genClock.restart();
-
-				for (int i = 0; i < m_robotTeamPurple.size(); ++i)
-				{
-					m_robotTeamPurple[i]->endGen();
-					m_robotTeamPurple[i]->startGen(0, 0);
-				}
-
-				for (int i = 0; i < m_robotTeamYellow.size(); ++i)
-				{
-					m_robotTeamYellow[i]->endGen();
-					m_robotTeamYellow[i]->startGen(0, 0);
-				}
-
-				//robot1.endGen(); // on termine la recherche
-				//robot1.startGen(robot2.getX(), robot2.getY()); // et on la relance avec les nouvelles entrees
-				//robot2.endGen();
-				//robot2.startGen(robot1.getX(), robot1.getY());
-				std::cout << "startGen" << std::endl;
-			}
-
-			genTime = genClock.getElapsedTime();
-			frameTime = frameClock.getElapsedTime();
-		}*/
-
 		//std::cout << frameTime.asMilliseconds() << std::endl;
 
 		for (int i = 0; i < m_robotTeamPurple.size(); ++i)
@@ -170,9 +92,6 @@ void SimulationState::update(const float& dt, const float wheelTicks)
 			m_robotTeamYellow[i]->update(frameTime);
 			std::cout << "update" << std::endl;
 		}
-
-		/*robot1.update(frameTime); //update prend le temps en argument afin que l'affichage soit identique peu importe le nbr de fps
-		robot2.update(frameTime);*/
 
 		frameClock.restart();
 	}
@@ -191,21 +110,11 @@ void SimulationState::render(sf::RenderTarget* target)
 
 	for (int i = 0; i < m_robotTeamPurple.size(); ++i)
 	{
-		/*target->draw(m_robotTeamPurple[i]->draw());
-		target->draw(m_robotTeamPurple[i]->drawTarget());
-		target->draw(m_robotTeamPurple[i]->drawTest());*/
 		m_robotTeamPurple[i]->render(*target);
 	}
 
 	for (int i = 0; i < m_robotTeamYellow.size(); ++i)
 	{
-		/*target->draw(m_robotTeamYellow[i]->draw());
-		target->draw(m_robotTeamYellow[i]->drawTarget());*/
 		m_robotTeamYellow[i]->render(*target);
 	}
-
-	/*target->draw(robot1.draw());
-	target->draw(robot2.draw());
-	target->draw(robot1.drawTarget());
-	target->draw(robot2.drawTarget());*/
 }

@@ -62,7 +62,7 @@ void Simulation::initKeys()
 
 void Simulation::initStates()
 {
-	this->states.push(new SimulationState(this->window, &this->supportedKeys, &this->states));
+	this->states.push(new MainMenuState(this->window, this->gfxSettings, &this->supportedKeys, &this->states));
 }
 
 //Constructors/Destructors

@@ -121,14 +121,6 @@ AlgoGen::AlgoGen(const int nbRobots)
 		m_posOther[i] = new Point[nbToursSimules];
 	}
 
-	/*for (int i = 0; i < nbRobots - 1; i++)
-	{
-		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
-		{
-			std::cout << m_posOther[i][j].getX() << std::endl;
-		}
-	}*/
-
 	for (int i = 0; i < NB_SOL + 1; i++)
 	{
 		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
@@ -224,24 +216,9 @@ void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actua
 			for (int j = 1; j < NB_TOURS_SIMULES; j++)
 			{
 				m_posOther[i][j] = m_posOther[i][0] + j * (m_posOther[i][0] - lastPos);
-				/*m_posEn[0][j] = m_posEn[0][0] + (m_posEn[0][0] - xprec) * j;
-				m_posEn[1][j] = m_posEn[1][0] + (m_posEn[1][0] - yprec) * j;*/
 			}
 		}
 	}
-	/*
-	int xprec = m_posOther[0][0];
-	int yprec = m_posEn[1][0];
-
-	//estimation de la pos ennemie
-	m_posEn[0][0] = x;
-	m_posEn[1][0] = y;
-
-	for (int j = 1; j < NB_TOURS_SIMULES; j++)
-	{
-		m_posEn[0][j] = m_posEn[0][0] + (m_posEn[0][0] - xprec) * j;
-		m_posEn[1][j] = m_posEn[1][0] + (m_posEn[1][0] - yprec) * j;
-	}*/
 
 	m_posTest.Setall(actualPos.getX(), actualPos.getY(), actualPos.getangle());
 
@@ -379,20 +356,7 @@ void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actua
 
 void AlgoGen::endGen(float& rightSpeed, float& leftSpeed)
 {
-	/*
-	// affichage du robot vert (debug)
-	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
-
-	for (int i = 0; i < NB_TOURS_SIMULES; i++)
-	{
-		actualisePositionTest(m_sol[0][i][0] * TEMPS_GEN / 17, m_sol[0][i][1] * TEMPS_GEN / 17, i);
-	}
-
-	m_shapeTest.setPosition(m_posTest.getX(), m_posTest.getY());
-	m_shapeTest.setRotation(-degre(m_posTest.getangle()) - 90);*/
-
 	// mise à jour des vitesse des roues du robot
-
 	std::cout << "fin de gen. valeurs trouvees : " << m_sol[0][0][0] << std::endl;
 
 	m_collision = false;
@@ -1015,13 +979,6 @@ int AlgoGen::testDist()
 	return -1;
 }
 
-/*bool AlgoGen::reachTarget(Point& target, Point& pos)
-{
-	if (dist(m_target.getX() - m_pos.getX(), m_target.getY() - m_pos.getY()) < 13 && val_abs(properAngleRad(m_target.getangle() - m_pos.getangle())) < 0.05 && val_abs(m_rightSpeed) < 0.1 && val_abs(m_leftSpeed) < 0.1)
-		return true;
-	return false;
-}*/
-
 bool AlgoGen::reachTargetTest(int i, Point& target)
 {
 	return dist(target - m_posTest) < 7 // proximite avec la target
@@ -1029,11 +986,6 @@ bool AlgoGen::reachTargetTest(int i, Point& target)
 		&& val_abs(m_sol[NB_SOL][i][0]) < 0.3 // robot à l'arret
 		&& val_abs(m_sol[NB_SOL][i][0]) < 0.3
 		&& m_collision == false;
-	/*if ((dist(target - m_posTest) < 7 && val_abs(properAngleRad(target.getangle() - m_posTest.getangle())) < 0.03 && val_abs(m_sol[NB_SOL][i][0]) < 0.3 && val_abs(m_sol[NB_SOL][i][0]) < 0.3) && m_collision == false)
-	{
-		return true;
-	}
-	return false;*/
 }
 
 

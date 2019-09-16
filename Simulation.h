@@ -2,7 +2,8 @@
 
 #include"State.h"
 #include"GraphicsSettings.h"
-#include"SimulationState.h"
+#include"MainMenuState.h"
+#include"Gui.h"
 
 class Simulation
 {

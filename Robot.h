@@ -28,40 +28,8 @@ public:
 
 	void render(sf::RenderTarget& target);
 
-
-	//genetique
-	void startGen(float x, float y);
-	void endGen();
-	void actualisePositionTest(float rightSpeed, float leftSpeed, int i);
-	float evalueSol() const;
-	void swapSol(int sol1, int sol2);
-	int chercheMeilleure(int indiceDepart);
-	void genSol();
-	void crossOver(int ind1, int ind2, int a);
-	void mutate();
-	void brake(int ind);
-	void accel(int ind);
-	void turnRight(int ind);
-	void turnLeft(int ind);
 	void retarget();
-
-	float getX();
-	float getY();
-	Point getPos();
-
-	void testCollisionTest();
-	void testUpCollisionTest();
-	void testBotCollisionTest();
-	void testLeftCollisionTest();
-	void testRightCollisionTest();
-
-	void testCollisionEn(int i);
-
-	void score(int indSol);
-	void distSolTest(int indSol);
-	int testDist();
 	bool reachTarget();
-	bool reachTargetTest(int i);
 
 protected:
 
@@ -79,20 +47,9 @@ private:
 	sf::RectangleShape m_shapeTarget;
 	int m_delay;
 
-	//genetique
 	Pathfinding* m_IAPthfinding;
 	std::vector<Point*> m_posOtherRobot;
 
-
-	float m_sol[NB_SOL + 1][NB_TOURS_SIMULES + 1][2]; //[n° de la sol (nb_sol+1 pour stocker la sol testee)]
-														//[avancee dans le temps(NB_TOURS_SIMULES+1 pour stocker le score)][droite, gauche]
-	int m_posEn[2][NB_TOURS_SIMULES]; // pos d'un robot ennemi
-	bool m_collision; // =true si une collision a lieu lors de la simulation, faux sinon
-	int m_malus; // malus utilisé pour noter les solutions generees
-	int m_nbMutations; // utile pour des statistiques
-
-	Point m_posTest; // utilisée pour simuler l'avancee du robot virtuellement sur plusieurs tours
-	Point m_posDep; // position de depart a partir de laquelle on va rechercher la trajectoire optimale. Cette position doit rester fixe pendant toute la duree de la recherche
 };
 
 #endif // ROBOT1_H
