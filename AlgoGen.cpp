@@ -1,326 +1,236 @@
 #include"stdafx.h"
 
-#include "Robot.h"
+#include "AlgoGen.h"
 
-using namespace std;
+//float radian(float angle)
+//{
+//	return angle / 180 * PI;
+//}
+//
+//float degre(float angle)
+//{
+//	return angle / PI * 180;
+//}
+//
+//float val_abs(float a)
+//{
+//	if (a > 0)
+//		return a;
+//	return -a;
+//}
+//
+//float part_pos(float a)
+//{
+//	if (a > 0)
+//		return a;
+//	return 0;
+//}
+//
+//float dist(float a, float b)
+//{
+//	return sqrt(a * a + b * b);
+//}
+//
+//float dist(Point p)
+//{
+//	return sqrt(p.getX() * p.getX() + p.getY() * p.getY());
+//}
+//
+//float properAngleRad(float ang) // returns the same angle between PI and -PI
+//{
+//	if (ang > PI)
+//		return ang - 2 * PI;
+//	if (ang <= -PI)
+//		return ang + 2 * PI;
+//	return ang;
+//}
+//
+//int sgn(float a)
+//{
+//	if (a >= 0)
+//		return 1;
+//	return -1;
+//}
+//
+//float xconv(int x) { // ces fonctions effectuent les conversions de cm vers l'unite utilisee dans cette simulation
+//	return (float)(WINDOW_WIDTH - x * WINDOW_WIDTH / 3000);
+//}
+//float yconv(int y) {
+//	return (float)(y * WINDOW_HEIGHT / 2000);
+//}
+//float aconv(int angle) {
+//	return (float)(PI - angle * PI / 180);
+//}
 
 
-robot::robot(int nbRobots, team team) 
-	: m_target(xconv(330), yconv(1200), aconv(0)), 
-	m_posTest(), m_posDep(800, 500, PI / 2),
-	m_maxAcceleration(0.5f), m_maxSpeed(10.f)
+Point operator+(Point const& a, Point const& b)
 {
-	switch (team)
-	{
-	case (PURPLE):
-		m_pos.Setall(xconv(250), yconv(705), aconv(90));
-		m_target.Setall(xconv(250), yconv(705), aconv(90));
-		break;
+	Point result;
 
-	case(YELLOW):
-		m_pos.Setall(xconv(2550), yconv(705), aconv(90));
-		m_target.Setall(xconv(2500), yconv(705), aconv(90));
-		break;
+	result.Setall(a.getX() + b.getX(), a.getY() + b.getY(), a.getangle() + b.getangle());
 
-	default:
-		break;
-	}
+	return result;
+}
 
-	m_length = 110;
-	m_width = 100;
-	m_rightSpeed = 0.1;
-	m_leftSpeed = 0;
-	m_delay = 2000;
+Point operator-(Point const& a, Point const& b)
+{
+	Point result;
+
+	result.Setall(a.getX() - b.getX(), a.getY() - b.getY(), a.getangle() - b.getangle());
+
+	return result;
+}
+
+Point operator*(float const t, Point const& a)
+{
+	Point result;
+
+	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
+
+	return result;
+}
+
+Point operator*(Point const& a, float const t)
+{
+	Point result;
+
+	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
+
+	return result;
+}
+
+bool operator!=(Point const& a, Point const& b)
+{
+	return a.getX() == b.getX() && a.getY() == b.getY() && a.getangle() == b.getangle();
+}
+
+AlgoGen::AlgoGen(const int nbRobots) 
+	: m_posTest(), m_posDep(), m_posOther(), m_clockSearchLeft(), m_timeSearchLeft(), m_nbRobots(nbRobots), m_maxSpeed(10.f), m_maxAcceleration(0.5f)
+{
+	m_clockSearchLeft.restart();
+	m_timeSearchLeft = sf::Time(sf::milliseconds(0));
+
 	m_collision = false;
+	m_malus = 0;
 	m_nbMutations = 0;
-	m_malus = 0;
 
-	sf::RectangleShape shape(sf::Vector2f(m_length, m_width));
-	shape.setOrigin(sf::Vector2f(m_length / 2, m_width / 2));
-	shape.setFillColor(sf::Color::Blue);
-	shape.setOutlineColor(sf::Color::Black);
-	shape.setOutlineThickness(2);
-	shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-	shape.setRotation(-degre(m_pos.getangle()) - 90);
+	m_posOther = new Point * [nbRobots] {0};
 
-	m_shape = shape;
+	for (int i = 0; i < nbRobots - 1; i++)
+	{
+		m_posOther[i] = new Point[nbToursSimules];
+	}
 
-	shape.setFillColor(sf::Color(20, 100, 20, 170));
-	shape.setPosition(sf::Vector2f(m_pos.getX() + 100, m_pos.getY()));
-	shape.setRotation(-degre(m_pos.getangle()) - 90);
-
-	m_shapeTest = shape;
-
-	shape.setFillColor(sf::Color(0, 0, 255, 150));
-	shape.setPosition(sf::Vector2f(m_target.getX(), m_target.getY()));
-	shape.setRotation(-degre(m_target.getangle()) - 90);
-
-	m_shapeTarget = shape;
-
-	//gen
-	m_IAPthfinding = new AlgoGen(nbRobots);
-	m_posOtherRobot.push_back(new Point);
-
-	for (int i = 0; i < NB_SOL + 1; i++)
+	/*for (int i = 0; i < nbRobots - 1; i++)
 	{
 		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
 		{
-			m_sol[i][j][0] = 0;
-			m_sol[i][j][1] = 0;
+			std::cout << m_posOther[i][j].getX() << std::endl;
 		}
-	}
-
-	for (int j = 0; j < NB_TOURS_SIMULES; j++)
-	{
-		m_posEn[0][j] = 0;
-		m_posEn[1][j] = 0;
-	}
-}
-
-robot::robot(float x, float y, float angle, sf::Color color, int nbRobots) 
-	: RenderObject(x, y, angle), 
-	m_target(400, 100, PI / 2), 
-	m_posTest(), m_posDep(),
-	m_maxAcceleration(0.5f), m_maxSpeed(10.f)
-{
-	m_length = 110;
-	m_width = 100;
-	m_rightSpeed = 1;
-	m_leftSpeed = 2;
-	m_delay = 2000;
-	m_collision = false;
-	m_malus = 0;
-
-	sf::RectangleShape shape(sf::Vector2f(m_length, m_width));
-	shape.setOrigin(sf::Vector2f(m_length / 2, m_width / 2));
-	shape.setFillColor(color);
-	shape.setOutlineColor(sf::Color::Black);
-	shape.setOutlineThickness(2);
-	shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-	shape.setRotation(-degre(m_pos.getangle()) - 90);
-
-	m_shape = shape;
-
-	shape.setFillColor(sf::Color(255, 0, 0, 150));
-	shape.setPosition(sf::Vector2f(m_target.getX(), m_target.getY()));
-	shape.setRotation(-degre(m_target.getangle()) - 90);
-
-	m_shapeTarget = shape;
-
-	//gen
-	m_IAPthfinding = new AlgoGen(nbRobots);
-
-	for (int i = 0; i < NB_SOL + 1; i++)
-	{
-		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
-		{
-			m_sol[i][j][0] = 0;
-			m_sol[i][j][1] = 0;
-		}
-	}
-
-	for (int j = 0; j < NB_TOURS_SIMULES; j++)
-	{
-		m_posEn[0][j] = 0;
-		m_posEn[1][j] = 0;
-	}
-}
-
-robot::~robot()
-{
-	if (m_IAPthfinding)
-		delete m_IAPthfinding;
-
-	for (int i = 0; i < m_posOtherRobot.size(); ++i)
-	{
-		delete m_posOtherRobot[i];
-	}
-}
-
-
-sf::RectangleShape robot::draw()
-{
-	return m_shape;
-}
-
-sf::RectangleShape robot::drawTest()
-{
-	return m_shapeTest;
-}
-
-sf::RectangleShape robot::drawTarget()
-{
-	return m_shapeTarget;
-}
-
-void robot::update(sf::Time time)
-{
-	m_delay = 0;
-	if (m_delay == 0)
-	{
-		frottements(time.asMilliseconds());
-
-		actualise_position(m_rightSpeed, m_leftSpeed);
-
-		m_shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-		m_shape.setRotation(-degre(m_pos.getangle()) - 90);
-	}
-	else
-	{
-		m_delay -= time.asMilliseconds();
-		if (m_delay < 0)
-			m_delay = 0;
-	}
-}
-
-void robot::updateClavier(float vitD, float vitG) // utile au debug : permet de tester le comportement du robot en deplacant la target au clavier
-{
-	actualise_positionTarget(vitD, vitG);
-	//actualise_position(vitD,vitG); // on peut aussi controler le robot au clavier en inversant les lignes commentees dans cette fonction
-
-	m_shapeTarget.setPosition(sf::Vector2f(m_target.getX(), m_target.getY()));
-	m_shapeTarget.setRotation(-degre(m_target.getangle()) - 90);
-	//m_shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-	//m_shape.setRotation(-degre(m_pos.getangle()) - 90);
-}
-
-void robot::frottements(int time)
-{
-	m_leftSpeed *= 1 - 0.005 * time * FPS / 1000;
-	m_rightSpeed *= 1 - 0.005 * time * FPS / 1000;
-}
-
-void robot::actualise_position(float rightSpeed, float leftSpeed)
-{
-	// determination du cercle décrit par la trajectoire et de la vitesse du robot sur ce cercle
-
-	if (rightSpeed != leftSpeed) {
-
-		float R = 0; // rayon du cercle decrit par la trajectoire
-		float d = 0; // vitesse du robot
-		float cx = 0; // position du centre du cercle decrit par la trajectoire
-		float cy = 0;
-
-		R = ECART_ROUE / 2 * (rightSpeed + leftSpeed) / (leftSpeed - rightSpeed); // rayon du cercle
-		cx = m_pos.getX() + R * sin(m_pos.getangle());
-		cy = m_pos.getY() + R * cos(m_pos.getangle());
-		d = (leftSpeed + rightSpeed) * 0.5;
-
-		// mise à jour des coordonnées du robot
-		if (leftSpeed + rightSpeed != 0) {
-			m_pos.Setangle(m_pos.getangle() - d / R);//m_angle -= d/R;
-		}
-		else {
-			m_pos.Setangle(m_pos.getangle() + rightSpeed * 2.0 / ECART_ROUE); //m_angle += rightSpeed*2.0 / ECART_ROUE;
-		}
-
-		if (m_pos.getangle() > PI)
-		{
-			m_pos.Setangle(m_pos.getangle() - 2 * PI); //m_angle -= 2*PI;
-		}
-		else if (m_pos.getangle() <= -PI)
-		{
-			m_pos.Setangle(m_pos.getangle() + 2 * PI); //m_angle += 2*PI;
-		}
-
-		m_pos.setX(cx - R * sin(m_pos.getangle())); //m_xPos = cx - R * sin(m_angle);
-		m_pos.setY(cy - R * cos(m_pos.getangle())); //m_yPos = cy - R * cos(m_angle);
-	}
-	else if (leftSpeed == rightSpeed) { // cas où la trajectoire est une parfaite ligne droite
-
-		m_pos.setX(m_pos.getX() + leftSpeed * cos(m_pos.getangle())); //m_xPos += leftSpeed * cos(m_angle);
-		m_pos.setY(m_pos.getY() - rightSpeed * sin(m_pos.getangle())); //m_yPos -= rightSpeed * sin(m_angle);
-	}
-}
-
-void robot::actualise_positionTarget(float rightSpeed, float leftSpeed)
-{
-	// determination du cercle décrit par la trajectoire et de la vitesse du robot sur ce cercle
-
-	if (rightSpeed != leftSpeed) {
-
-		float R = 0; // rayon du cercle decrit par la trajectoire
-		float d = 0; // vitesse du robot
-		float cx = 0; // position du centre du cercle decrit par la trajectoire
-		float cy = 0;
-
-		R = ECART_ROUE / 2 * (rightSpeed + leftSpeed) / (leftSpeed - rightSpeed); // rayon du cercle
-		cx = m_target.getX() + R * sin(m_target.getangle());
-		cy = m_target.getY() + R * cos(m_target.getangle());
-		d = (leftSpeed + rightSpeed) * 0.5;
-
-		// mise à jour des coordonnées du robot
-		if (leftSpeed + rightSpeed != 0) {
-			m_target.Setangle(m_target.getangle() - d / R);//m_angle -= d/R;
-		}
-		else {
-			m_target.Setangle(m_target.getangle() + rightSpeed * 2.0 / ECART_ROUE); //m_angle += rightSpeed*2.0 / ECART_ROUE;
-		}
-
-		if (m_target.getangle() > PI)
-		{
-			m_target.Setangle(m_target.getangle() - 2 * PI); //m_angle -= 2*PI;
-		}
-		else if (m_target.getangle() <= -PI)
-		{
-			m_target.Setangle(m_target.getangle() + 2 * PI); //m_angle += 2*PI;
-		}
-
-		m_target.setX(cx - R * sin(m_target.getangle())); //m_xPos = cx - R * sin(m_angle);
-		m_target.setY(cy - R * cos(m_target.getangle())); //m_yPos = cy - R * cos(m_angle);
-	}
-	else if (leftSpeed == rightSpeed) { // cas où la trajectoire est une parfaite ligne droite
-
-		m_target.setX(m_target.getX() + leftSpeed * cos(m_target.getangle())); //m_xPos += leftSpeed * cos(m_angle);
-		m_target.setY(m_target.getY() - rightSpeed * sin(m_target.getangle())); //m_yPos -= rightSpeed * sin(m_angle);
-	}
-}
-
-bool robot::delay()
-{
-	if (m_delay > 0)
-		return true;
-	return false;
-}
-
-void robot::play(float time_available)
-{
-	/*if (reachTarget())
-	{
-		m_delay = 200;
-		m_rightSpeed = 0;
-		m_leftSpeed = 0;
-		retarget();
-	}
-	else
-	{
-		m_IAPthfinding->run(time_available, m_rightSpeed, m_leftSpeed, m_pos, m_target, m_posOtherRobot);
 	}*/
-	std::cout << "running" << std::endl;
-	m_IAPthfinding->run(time_available, m_rightSpeed, m_leftSpeed, m_pos, m_target, m_posOtherRobot);
-	std::cout << "vitesses appliquees : " << m_rightSpeed << ", " << m_leftSpeed << std::endl;
 
-	if (reachTarget())
+	for (int i = 0; i < NB_SOL + 1; i++)
 	{
-		cout << "target reached" << std::endl;
-		retarget();
+		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
+		{
+			m_sol[i][j][0] = 0;
+			m_sol[i][j][1] = 0;
+		}
 	}
 }
 
-void robot::render(sf::RenderTarget& target)
+AlgoGen::~AlgoGen()
 {
-	target.draw(m_shape);
-	target.draw(m_shapeTarget);
-	//target.draw(m_shapeTest);
+	if (m_posOther)
+	{
+		for (int i = 0; i < m_nbRobots; i++)
+		{
+			if (m_posOther[i])
+				delete[] m_posOther[i];
+		}
 
-	m_IAPthfinding->render(target);
+		delete[] m_posOther;
+	}
+	m_posOther = NULL;
 }
 
-//genetique
-
-void robot::startGen(float x, float y) // appelée dans le main, setup tout avant de lancer la recherche de trajectoires
+void AlgoGen::init(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed)
 {
-	int xprec = m_posEn[0][0];
+	//m_clockSearchLeft.restart();
+	//m_timeSearchLeft = sf::Time(sf::milliseconds(temps_gen));
+
+	startGen(robot_pos, actualPos, target, rightSpeed, leftSpeed);
+
+}
+
+void AlgoGen::run(float timeAvailable, float& rightSpeed, float& leftSpeed, const Point& actual_pos, const Point& target, const std::vector <Point*>& robot_pos)
+{
+	sf::Clock timeLeft;
+	timeLeft.restart();
+
+	while (timeLeft.getElapsedTime().asMilliseconds() < timeAvailable)
+	{
+		if (m_timeSearchLeft.asMilliseconds() > 0)
+		{
+			for (int i = 0; i < 20; ++i)
+			{
+				genSol(rightSpeed, leftSpeed, target);
+			}
+
+			m_timeSearchLeft = sf::Time(sf::milliseconds(temps_gen)) - m_clockSearchLeft.getElapsedTime();
+		}
+		else
+		{
+			end(rightSpeed, leftSpeed); // Application du resultat trouvé
+			init(robot_pos, actual_pos, target, rightSpeed, leftSpeed); // Preparation a la prochaine recherche
+
+			m_clockSearchLeft.restart();
+			m_timeSearchLeft = sf::Time(sf::milliseconds(temps_gen));
+		}
+	}
+}
+
+void AlgoGen::end(float& rightSpeed, float& leftSpeed)
+{
+	endGen(rightSpeed, leftSpeed);
+
+	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
+
+	for (int i = 0; i < NB_TOURS_SIMULES; i++) // affichage du robot vert
+	{
+		actualisePositionTest(m_sol[0][i][0] * TEMPS_GEN / 17, m_sol[0][i][1] * TEMPS_GEN / 17, i);
+	}
+
+	m_shapeDebug.setPosition(m_posTest.getX(), m_posTest.getY());
+	m_shapeDebug.setRotation(-degre(m_posTest.getangle()) - 90);
+}
+
+void AlgoGen::render(sf::RenderTarget& target)
+{
+	target.draw(m_shapeDebug);
+}
+
+void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed) // setup tout avant de lancer la recherche de trajectoires
+{
+	// mise à jour de la pos des autres robots
+	for (int i = 0; i < robot_pos.size(); ++i)
+	{
+		if (*robot_pos[i] != actualPos)
+		{
+			Point lastPos = m_posOther[i][0];
+
+			m_posOther[i][0] = *robot_pos[i];
+
+			for (int j = 1; j < NB_TOURS_SIMULES; j++)
+			{
+				m_posOther[i][j] = m_posOther[i][0] + j * (m_posOther[i][0] - lastPos);
+				/*m_posEn[0][j] = m_posEn[0][0] + (m_posEn[0][0] - xprec) * j;
+				m_posEn[1][j] = m_posEn[1][0] + (m_posEn[1][0] - yprec) * j;*/
+			}
+		}
+	}
+	/*
+	int xprec = m_posOther[0][0];
 	int yprec = m_posEn[1][0];
 
 	//estimation de la pos ennemie
@@ -331,21 +241,23 @@ void robot::startGen(float x, float y) // appelée dans le main, setup tout avant
 	{
 		m_posEn[0][j] = m_posEn[0][0] + (m_posEn[0][0] - xprec) * j;
 		m_posEn[1][j] = m_posEn[1][0] + (m_posEn[1][0] - yprec) * j;
-	}
+	}*/
 
-	m_posTest.Setall(m_pos.getX(), m_pos.getY(), m_pos.getangle());
-	if (reachTarget())
+	m_posTest.Setall(actualPos.getX(), actualPos.getY(), actualPos.getangle());
+
+	/*if (reachTarget())
 	{
+		return;
 		m_delay = 200;
 		m_rightSpeed = 0;
 		m_leftSpeed = 0;
 		retarget();
-	}
+	}*/
 
 	//initialise les variables, prepare aux mutations
 
-	m_posTest.Setall(m_pos.getX(), m_pos.getY(), m_pos.getangle());
-	actualisePositionTest(m_rightSpeed * TEMPS_GEN * 60 / 1000, m_leftSpeed * TEMPS_GEN * 60 / 1000, -1);
+	m_posTest.Setall(actualPos.getX(), actualPos.getY(), actualPos.getangle());
+	actualisePositionTest(rightSpeed * TEMPS_GEN * 60 / 1000, leftSpeed * TEMPS_GEN * 60 / 1000, -1);
 	m_posDep.Setall(m_posTest.getX(), m_posTest.getY(), m_posTest.getangle());
 
 	//remise a 0 des scores des sol
@@ -393,26 +305,29 @@ void robot::startGen(float x, float y) // appelée dans le main, setup tout avant
 		m_sol[4][i][1] = 2;
 	}
 
-	for (int i = 5; i < NB_SOL; i++) //les autres sol sont mises à 0, on peut ajouter d'autres mecanismes de generation de sol initiales si besoin
+	if (NB_SOL > 5)
 	{
-		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++) //avance tout droit
+		for (int i = 5; i < NB_SOL; i++) //les autres sol sont mises à 0, on peut ajouter d'autres mecanismes de generation de sol initiales si besoin
 		{
-			m_sol[i][j][0] = 0;
-			m_sol[i][j][1] = 0;
+			for (int j = 0; j < NB_TOURS_SIMULES + 1; j++) //avance tout droit
+			{
+				m_sol[i][j][0] = 0;
+				m_sol[i][j][1] = 0;
+			}
 		}
 	}
 
-	//rend les sol generees conformes
+	//rends les sol generees conformes
 	for (int j = 0; j < NB_SOL; j++)
 	{
-		if (m_sol[j][0][0] > m_rightSpeed + 0.5)
-			m_sol[j][0][0] = m_rightSpeed + 0.5;
-		if (m_sol[j][0][0] < m_rightSpeed - 1)
-			m_sol[j][0][0] = m_rightSpeed - 1;
-		if (m_sol[j][0][1] > m_leftSpeed + 0.5)
-			m_sol[j][0][1] = m_leftSpeed + 0.5;
-		if (m_sol[j][0][1] < m_leftSpeed - 1)
-			m_sol[j][0][1] = m_leftSpeed - 1;
+		if (m_sol[j][0][0] > rightSpeed + 0.5)
+			m_sol[j][0][0] = rightSpeed + 0.5;
+		if (m_sol[j][0][0] < rightSpeed - 1)
+			m_sol[j][0][0] = rightSpeed - 1;
+		if (m_sol[j][0][1] > leftSpeed + 0.5)
+			m_sol[j][0][1] = leftSpeed + 0.5;
+		if (m_sol[j][0][1] < leftSpeed - 1)
+			m_sol[j][0][1] = leftSpeed - 1;
 
 		for (int i = 1; i < NB_TOURS_SIMULES; i++)
 		{
@@ -446,11 +361,13 @@ void robot::startGen(float x, float y) // appelée dans le main, setup tout avant
 		for (int i = 0; i < NB_TOURS_SIMULES; i++)
 		{
 			actualisePositionTest(m_sol[j][i][0] * TEMPS_GEN * 60 / 1000, m_sol[j][i][1] * TEMPS_GEN * 60 / 1000, i);
-			m_sol[j][NB_TOURS_SIMULES][0] += evalueSol() / NB_TOURS_SIMULES; // on fait la moyenne du score de toutes les positions par lesquelle est passe le robot
+			m_sol[j][NB_TOURS_SIMULES][0] += evalueSol(target) / NB_TOURS_SIMULES; // on fait la moyenne du score de toutes les positions par lesquelle est passe le robot
 		}
 
-		if (evalueSol() < 900) // si le robot est encore loin de la target, le score de la solution est finalement seulement la position finale
-			m_sol[j][NB_TOURS_SIMULES][0] = evalueSol() - 500;
+		if (evalueSol(target) < 900.f) // si le robot est encore loin de la target, le score de la solution est finalement seulement la position finale
+		{
+			m_sol[j][NB_TOURS_SIMULES][0] = evalueSol(target) - 500;
+		}
 
 		distSolTest(j);
 	}
@@ -460,44 +377,63 @@ void robot::startGen(float x, float y) // appelée dans le main, setup tout avant
 		swapSol(chercheMeilleure(i), i);
 }
 
-void robot::endGen() // appelée à la fin de la recherche génétique pour mettre à jour les vitesses appliquees au robot
+void AlgoGen::endGen(float& rightSpeed, float& leftSpeed)
 {
+	/*
+	// affichage du robot vert (debug)
 	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
 
-	for (int i = 0; i < NB_TOURS_SIMULES; i++) // affichage du robot vert
+	for (int i = 0; i < NB_TOURS_SIMULES; i++)
 	{
 		actualisePositionTest(m_sol[0][i][0] * TEMPS_GEN / 17, m_sol[0][i][1] * TEMPS_GEN / 17, i);
 	}
 
 	m_shapeTest.setPosition(m_posTest.getX(), m_posTest.getY());
-	m_shapeTest.setRotation(-degre(m_posTest.getangle()) - 90);
+	m_shapeTest.setRotation(-degre(m_posTest.getangle()) - 90);*/
 
 	// mise à jour des vitesse des roues du robot
+
+	std::cout << "fin de gen. valeurs trouvees : " << m_sol[0][0][0] << std::endl;
 
 	m_collision = false;
 	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
 
 	actualisePositionTest(m_sol[0][0][0] * TEMPS_GEN / 17, m_sol[0][0][1] * TEMPS_GEN / 17, 0);
 
-	if (!m_collision && m_delay == 0)
+	/*if (!m_collision)
 	{
-		m_rightSpeed = m_sol[0][0][0];
-		m_leftSpeed = m_sol[0][0][1];
+		rightSpeed = m_sol[0][0][0];
+		leftSpeed = m_sol[0][0][1];
 	}
 	else
 	{
-		m_rightSpeed = 0;
-		m_leftSpeed = 0;
-	}
+		rightSpeed = 0;
+		leftSpeed = 0;
+	}*/
+
+	rightSpeed = m_sol[0][0][0];
+	leftSpeed = m_sol[0][0][1];
 }
 
-void robot::swapSol(int sol1, int sol2)
+float AlgoGen::evalueSol(const Point& target) const // fonction cruciale : c'est grace a la note retournee par cette fonction que l'on va evaluer les performances d'une solution
+{
+	float d = dist(target.getX() - m_posTest.getX(), target.getY() - m_posTest.getY()); // la distance entre la pos actuelle du robot et sa target
+	float a = 512;
+	if (d < 5) // on considere a seulement si le robot est suffisamment proche de la cible
+	{
+		a = val_abs(properAngleRad(target.getangle() - m_posTest.getangle())) * 160; // la difference d'angle entre la pos actuelle du robot et sa target
+	}
+	return 1000 - d - a - m_malus; //la note max est de 1000. m_malus augmente en fonction des obstacles rencontres par le robot
+}
+
+void AlgoGen::swapSol(const int sol1, const int sol2)
 {
 	//echange les positions de sol1 et sol2. Optimisable en le faisant avec des pointeurs. Cette optimisation est d'autant pluys nécessaire que NB_SOL est grand
 	if (sol1 != sol2)
 	{
 		//copie de m_sol[sol1] dans un tableau temporaire
 		float solTemp[NB_TOURS_SIMULES + 1][2];
+
 		for (int i = 0; i < NB_TOURS_SIMULES + 1; i++)
 		{
 			solTemp[i][0] = m_sol[sol1][i][0];
@@ -520,11 +456,11 @@ void robot::swapSol(int sol1, int sol2)
 	}
 }
 
-int robot::chercheMeilleure(int indiceDepart) //const
+int AlgoGen::chercheMeilleure(int indiceDepart)
 {
 	//cherche la meilleure sol parmi celles apres l'indice de depart dans m_sol
-
 	int a = indiceDepart;
+
 	for (int i = indiceDepart + 1; i < NB_SOL; i++)
 	{
 		if (m_sol[a][NB_TOURS_SIMULES][0] < m_sol[i][NB_TOURS_SIMULES][0])
@@ -533,18 +469,7 @@ int robot::chercheMeilleure(int indiceDepart) //const
 	return a;
 }
 
-float robot::evalueSol() const // fonction cruciale : c'est grace a la note retournee par cette fonction que l'on va evaluer les performances d'une solution
-{
-	float d = dist(m_target.getX() - m_posTest.getX(), m_target.getY() - m_posTest.getY()); // la distance entre la pos actuelle du robot et sa target
-	float a = 512;
-	if (d < 5) // on considere a seulement si le robot est suffisamment proche de la cible
-	{
-		a = val_abs(properAngleRad(m_target.getangle() - m_posTest.getangle())) * 160; // la difference d'angle entre la pos actuelle du robot et sa target
-	}
-	return 1000 - d - a - m_malus; //la note max est de 1000. m_malus augmente en fonction des obstacles rencontres par le robot
-}
-
-void robot::genSol()
+void AlgoGen::genSol(const float& rightSpeed, const float& leftSpeed, const Point& target)
 {
 	//genere une nouvelle solution et la teste
 
@@ -564,33 +489,39 @@ void robot::genSol()
 	m_nbMutations++;
 
 	//teste si la sol generee est conforme
-	if (m_sol[NB_SOL][0][0] > m_rightSpeed + 0.5)
-		m_sol[NB_SOL][0][0] = m_rightSpeed + 0.5;
-	if (m_sol[NB_SOL][0][0] < m_rightSpeed - 0.5)
-		m_sol[NB_SOL][0][0] = m_rightSpeed - 0.5;
-	if (m_sol[NB_SOL][0][1] > m_leftSpeed + 0.5)
-		m_sol[NB_SOL][0][1] = m_leftSpeed + 0.5;
-	if (m_sol[NB_SOL][0][1] < m_leftSpeed - 0.5)
-		m_sol[NB_SOL][0][1] = m_leftSpeed - 0.5;
-	if (m_sol[NB_SOL][0][0] > 5)
-		m_sol[NB_SOL][0][0] = 5;
-	if (m_sol[NB_SOL][0][1] > 5)
-		m_sol[NB_SOL][0][1] = 5;
-
-	for (int i = 1; i < NB_TOURS_SIMULES; i++)
 	{
-		if (m_sol[NB_SOL][i][0] > m_sol[NB_SOL][i - 1][0] + 0.5)
-			m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] + 0.5;
-		if (m_sol[NB_SOL][i][0] < m_sol[NB_SOL][i - 1][0] - 0.5)
-			m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] - 0.5;
-		if (m_sol[NB_SOL][i][1] > m_sol[NB_SOL][i - 1][1] + 0.5)
-			m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] + 0.5;
-		if (m_sol[NB_SOL][i][1] < m_sol[NB_SOL][i - 1][1] - 0.5)
-			m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] - 0.5;
-		if (m_sol[NB_SOL][i][0] > 5)
-			m_sol[NB_SOL][i][0] = 5;
-		if (m_sol[NB_SOL][i][1] > 5)
-			m_sol[NB_SOL][i][1] = 5;
+		if (m_sol[NB_SOL][0][0] > rightSpeed + m_maxAcceleration)
+			m_sol[NB_SOL][0][0] = rightSpeed + m_maxAcceleration;
+		if (m_sol[NB_SOL][0][0] < rightSpeed - m_maxAcceleration)
+			m_sol[NB_SOL][0][0] = rightSpeed - m_maxAcceleration;
+		if (m_sol[NB_SOL][0][1] > leftSpeed + m_maxAcceleration)
+			m_sol[NB_SOL][0][1] = leftSpeed + m_maxAcceleration;
+		if (m_sol[NB_SOL][0][1] < leftSpeed - m_maxAcceleration)
+			m_sol[NB_SOL][0][1] = leftSpeed - m_maxAcceleration;
+		if (m_sol[NB_SOL][0][0] > m_maxSpeed)
+			m_sol[NB_SOL][0][0] = m_maxSpeed;
+		if (m_sol[NB_SOL][0][1] > m_maxSpeed)
+			m_sol[NB_SOL][0][1] = m_maxSpeed;
+
+		for (int i = 1; i < NB_TOURS_SIMULES; i++)
+		{
+			if (m_sol[NB_SOL][i][0] > m_sol[NB_SOL][i - 1][0] + m_maxAcceleration)
+				m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] + m_maxAcceleration;
+			if (m_sol[NB_SOL][i][0] < m_sol[NB_SOL][i - 1][0] - m_maxAcceleration)
+				m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] - m_maxAcceleration;
+			if (m_sol[NB_SOL][i][1] > m_sol[NB_SOL][i - 1][1] + m_maxAcceleration)
+				m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] + m_maxAcceleration;
+			if (m_sol[NB_SOL][i][1] < m_sol[NB_SOL][i - 1][1] - m_maxAcceleration)
+				m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] - m_maxAcceleration;
+			if (m_sol[NB_SOL][i][0] > m_maxSpeed)
+				m_sol[NB_SOL][i][0] = m_maxSpeed;
+			if (m_sol[NB_SOL][i][1] > m_maxSpeed)
+				m_sol[NB_SOL][i][1] = m_maxSpeed;
+			if (m_sol[NB_SOL][i][0] < -m_maxSpeed)
+				m_sol[NB_SOL][i][0] = -m_maxSpeed;
+			if (m_sol[NB_SOL][i][1] < -m_maxSpeed)
+				m_sol[NB_SOL][i][1] = -m_maxSpeed;
+		}
 	}
 
 	//teste la solution NB_SOL et la classe parmi les autres solutions a partir de m_sol deja classe
@@ -605,17 +536,17 @@ void robot::genSol()
 	for (int i = 0; i < NB_TOURS_SIMULES; i++)
 	{
 		actualisePositionTest(m_sol[NB_SOL][i][0] * TEMPS_GEN * 60 / 1000, m_sol[NB_SOL][i][1] * TEMPS_GEN * 60 / 1000, i);
-		m_sol[NB_SOL][NB_TOURS_SIMULES][0] += evalueSol() / NB_TOURS_SIMULES;
+		m_sol[NB_SOL][NB_TOURS_SIMULES][0] += evalueSol(target) / NB_TOURS_SIMULES;
 		if (m_collision) // si une collision s'est produite, on ne prend pas en compte la solution generee
 		{
 			return;
 		}
 	}
 
-	if (evalueSol() < 400)
-		m_sol[NB_SOL][NB_TOURS_SIMULES][0] = evalueSol() - 500;
+	if (evalueSol(target) < 400)
+		m_sol[NB_SOL][NB_TOURS_SIMULES][0] = evalueSol(target) - 500;
 
-	distSolTest(NB_SOL);
+	//distSolTest(NB_SOL);
 
 	//on place la sol trouvee parmi les sol existantes par une recherche dicotomique
 	int classement = NB_SOL;
@@ -628,11 +559,11 @@ void robot::genSol()
 		{
 			if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[(int)((dico1 + dico2) * 0.5)][NB_TOURS_SIMULES][0])
 			{
-				dico2 = (int)((dico1 + dico2) * 0.5);
+				dico2 = (int)((dico1 + dico2) * 0.5f);
 			}
 			else
 			{
-				dico1 = (int)((dico1 + dico2) * 0.5);
+				dico1 = (int)((dico1 + dico2) * 0.5f);
 			}
 		}
 		if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[dico1][NB_TOURS_SIMULES][0])
@@ -660,7 +591,7 @@ void robot::genSol()
 	}
 }
 
-void robot::crossOver(int ind1, int ind2, int a)
+void AlgoGen::crossOver(int ind1, int ind2, int a)
 {
 	//mixe les sol ind1 et ind2 pour en creer une nouvelle
 
@@ -677,7 +608,7 @@ void robot::crossOver(int ind1, int ind2, int a)
 	}
 }
 
-void robot::mutate()
+void AlgoGen::mutate()
 {
 	float r = (float)rand() / RAND_MAX;
 	int a = (int)exp((float)rand() * log(NB_TOURS_SIMULES + 1) / RAND_MAX) - 1; //genere un entier entre 0 et NB_TOURS_SIMULES
@@ -692,7 +623,7 @@ void robot::mutate()
 		turnRight(a);
 }
 
-void robot::brake(int ind)
+void AlgoGen::brake(const int ind)
 {
 	for (int i = ind; i < NB_TOURS_SIMULES; i++)
 	{
@@ -701,7 +632,7 @@ void robot::brake(int ind)
 	}
 }
 
-void robot::accel(int ind)
+void AlgoGen::accel(const int ind)
 {
 	for (int i = ind; i < NB_TOURS_SIMULES; i++)
 	{
@@ -710,7 +641,7 @@ void robot::accel(int ind)
 	}
 }
 
-void robot::turnLeft(int ind)
+void AlgoGen::turnRight(const int ind)
 {
 	for (int i = ind; i < NB_TOURS_SIMULES; i++)
 	{
@@ -719,7 +650,7 @@ void robot::turnLeft(int ind)
 	}
 }
 
-void robot::turnRight(int ind)
+void AlgoGen::turnLeft(const int ind)
 {
 	for (int i = ind; i < NB_TOURS_SIMULES; i++)
 	{
@@ -728,20 +659,7 @@ void robot::turnRight(int ind)
 	}
 }
 
-void robot::retarget()
-{
-	float x = (float)(rand()) * 1150 / RAND_MAX + 200;
-	float y = (float)(rand()) * 400 / RAND_MAX + 200;
-	float ang = ((float)(rand()) / RAND_MAX - 0.5) * PI;
-
-	m_target.Setall(x, y, ang);
-
-	m_shapeTarget.setPosition(sf::Vector2f(m_target.getX(), m_target.getY()));
-	m_shapeTarget.setRotation(-degre(m_target.getangle()) - 90);
-}
-
-
-void robot::actualisePositionTest(float rightSpeed, float leftSpeed, int i)
+void AlgoGen::actualisePositionTest(const float& rightSpeed, const float& leftSpeed, int i)
 {
 	// determination du cercle décrit par la trajectoire et de la vitesse du robot sur ce cercle
 	if (rightSpeed != leftSpeed) {
@@ -787,61 +705,45 @@ void robot::actualisePositionTest(float rightSpeed, float leftSpeed, int i)
 		testCollisionEn(i);
 }
 
-void robot::testCollisionEn(int i)
+void AlgoGen::testCollisionTest()
 {
-	float d = dist(m_posTest.getX() - m_posEn[0][i], m_posTest.getY() - m_posEn[1][i]);
-	float v = val_abs(m_sol[NB_SOL][i][0] + m_sol[NB_SOL][i][0]);
-	if (d < 130)//min(50*(i+1), 200))
-	{
-		m_malus += (200 - d) + 500;
-		m_collision = true;
-	}
-	else if (d < min(70 * (i + 1), 250))
-	{
-		m_malus += ((250 - d)) * max(v - 2, 0.1f);
-	}
-}
-
-void robot::testCollisionTest()
-{
-	if (m_posTest.getX() < m_length)
+	if (m_posTest.getX() < robotLength)
 	{
 		//cout << "collision1" << endl;
-		m_malus += (m_length - m_posTest.getX()) / 20;
+		m_malus += (robotLength - m_posTest.getX()) / 20;
 		testLeftCollisionTest();
 	}
-	else if (m_posTest.getX() > WINDOW_WIDTH - m_length)
+	else if (m_posTest.getX() > WINDOW_WIDTH - robotLength)
 	{
-		m_malus += (m_posTest.getX() - WINDOW_WIDTH + m_length) / 20;
+		m_malus += (m_posTest.getX() - WINDOW_WIDTH + robotLength) / 20;
 		testRightCollisionTest();
 	}
-	if (m_posTest.getY() < m_length)
+	if (m_posTest.getY() < robotLength)
 	{
 		//cout << "collision3" << endl;
-		m_malus += (m_length - m_posTest.getY()) / 20;
+		m_malus += (robotLength - m_posTest.getY()) / 20;
 		testUpCollisionTest();
 	}
-	else if (m_posTest.getY() > WINDOW_HEIGHT - m_length - 220)
+	else if (m_posTest.getY() > WINDOW_HEIGHT - robotLength - 220)
 	{
 		//cout << "collision4" << endl;
-		m_malus += (m_posTest.getY() - WINDOW_HEIGHT + m_length + 220) / 20;
+		m_malus += (m_posTest.getY() - WINDOW_HEIGHT + robotLength + 220) / 20;
 		testBotCollisionTest();
 	}
-	if (dist(m_posTest.getX() - WINDOW_WIDTH / 2, m_posTest.getY() - (WINDOW_HEIGHT - 300)) < sqrt(m_width * m_width + m_length * m_length) / 1.8) //collision avec le bout de la balance
+	if (dist(m_posTest.getX() - WINDOW_WIDTH / 2, m_posTest.getY() - (WINDOW_HEIGHT - 300)) < sqrt(robotWidth * robotWidth + robotLength * robotLength) / 1.8) //collision avec le bout de la balance
 	{
 		m_malus += 200;
 		m_collision = true;
 	}
-
 }
 
-void robot::testUpCollisionTest()
+void AlgoGen::testUpCollisionTest()
 {
-	float diag = sqrt(m_width * m_width + m_length * m_length) / 2;
+	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
-	float angleCar = atan((float)(m_length) / m_width);
+	float angleCar = atan((float)(robotLength) / robotWidth);
 	float angle = m_posTest.getangle() - angleCar;
 
 	//float x1 = m_pos.getX() + diag*cos(angle);
@@ -892,13 +794,13 @@ void robot::testUpCollisionTest()
 	}
 }
 
-void robot::testBotCollisionTest()
+void AlgoGen::testBotCollisionTest()
 {
-	float diag = sqrt(m_width * m_width + m_length * m_length) / 2;
+	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
-	float angleCar = atan((float)(m_length) / m_width);
+	float angleCar = atan((float)(robotLength) / robotWidth);
 	float angle = m_posTest.getangle() - angleCar;
 
 	//float x1 = m_pos.getX() + diag*cos(angle);
@@ -949,13 +851,13 @@ void robot::testBotCollisionTest()
 	}
 }
 
-void robot::testLeftCollisionTest()
+void AlgoGen::testLeftCollisionTest()
 {
-	float diag = sqrt(m_width * m_width + m_length * m_length) / 2;
+	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
-	float angleCar = atan((float)(m_length) / m_width);
+	float angleCar = atan((float)(robotLength) / robotWidth);
 	float angle = m_posTest.getangle() - angleCar;
 
 	float x1 = m_posTest.getX() + diag * cos(angle);
@@ -1007,13 +909,13 @@ void robot::testLeftCollisionTest()
 	}
 }
 
-void robot::testRightCollisionTest()
+void AlgoGen::testRightCollisionTest()
 {
-	float diag = sqrt(m_width * m_width + m_length * m_length) / 2;
+	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
-	float angleCar = atan(1.1);//atan((float) (m_length)/m_width);
+	float angleCar = atan(1.1);//atan((float) (robotLength)/robotWidth);
 	float angle = m_posTest.getangle() - angleCar;
 
 	float x1 = m_posTest.getX() + diag * cos(angle);
@@ -1065,25 +967,31 @@ void robot::testRightCollisionTest()
 	}
 }
 
-float robot::getX() {
-	return m_pos.getX();
-}
-
-float robot::getY() {
-	return m_pos.getY();
-}
-
-Point robot::getPos()
+void AlgoGen::testCollisionEn(int i) // à revoir pour utiliser les collisions de sprite
 {
-	return m_pos;
+	for (int j = 0; j < m_nbRobots - 1; ++j)
+	{
+		float d = dist(m_posTest - m_posOther[0][i]);
+		float v = val_abs(m_sol[NB_SOL][i][0] + m_sol[NB_SOL][i][0]);
+
+		if (d < dist(robotLength, robotWidth))//min(50*(i+1), 200))
+		{
+			m_malus += (200 - d) + 500;
+			m_collision = true;
+		}
+		else if (d < std::min(dist(robotLength, robotWidth) * 0.5f * (i + 1), dist(robotLength, robotWidth) * 2.f))
+		{
+			m_malus += ((250 - d)) * std::min(v - 2.f, 0.1f);
+		}
+	}
 }
 
-void robot::score(int indSol)
+void AlgoGen::score(int indSol)
 {
 	m_sol[indSol][NB_TOURS_SIMULES][0] = (m_sol[indSol][NB_TOURS_SIMULES][0] * 0 + m_sol[indSol][NB_TOURS_SIMULES][1] * 2) / 2;
 }
 
-void robot::distSolTest(int indSol)
+void AlgoGen::distSolTest(int indSol)
 {
 	m_sol[indSol][NB_TOURS_SIMULES][1] = 0;
 
@@ -1095,7 +1003,7 @@ void robot::distSolTest(int indSol)
 	m_sol[indSol][NB_TOURS_SIMULES][1] *= sgn(m_sol[indSol][0][0] - m_sol[indSol][0][1] + m_sol[indSol][1][0] - m_sol[indSol][1][1] + m_sol[indSol][2][0] - m_sol[indSol][2][1]);
 }
 
-int robot::testDist()
+int AlgoGen::testDist()
 {
 	for (int i = 0; i < NB_TOURS_SIMULES; i++)
 	{
@@ -1107,18 +1015,25 @@ int robot::testDist()
 	return -1;
 }
 
-bool robot::reachTarget()
+/*bool AlgoGen::reachTarget(Point& target, Point& pos)
 {
 	if (dist(m_target.getX() - m_pos.getX(), m_target.getY() - m_pos.getY()) < 13 && val_abs(properAngleRad(m_target.getangle() - m_pos.getangle())) < 0.05 && val_abs(m_rightSpeed) < 0.1 && val_abs(m_leftSpeed) < 0.1)
 		return true;
 	return false;
-}
+}*/
 
-bool robot::reachTargetTest(int i)
+bool AlgoGen::reachTargetTest(int i, Point& target)
 {
-	if ((dist(m_target.getX() - m_posTest.getX(), m_target.getY() - m_posTest.getY()) < 7 && val_abs(properAngleRad(m_target.getangle() - m_posTest.getangle())) < 0.03 && val_abs(m_sol[NB_SOL][i][0]) < 0.3 && val_abs(m_sol[NB_SOL][i][0]) < 0.3) && m_collision == false)
+	return dist(target - m_posTest) < 7 // proximite avec la target
+		&& val_abs(properAngleRad(target.getangle() - m_posTest.getangle())) < 0.03 // angle tres proche
+		&& val_abs(m_sol[NB_SOL][i][0]) < 0.3 // robot à l'arret
+		&& val_abs(m_sol[NB_SOL][i][0]) < 0.3
+		&& m_collision == false;
+	/*if ((dist(target - m_posTest) < 7 && val_abs(properAngleRad(target.getangle() - m_posTest.getangle())) < 0.03 && val_abs(m_sol[NB_SOL][i][0]) < 0.3 && val_abs(m_sol[NB_SOL][i][0]) < 0.3) && m_collision == false)
 	{
 		return true;
 	}
-	return false;
+	return false;*/
 }
+
+
