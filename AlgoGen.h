@@ -19,7 +19,7 @@ private:
 
 	Point** m_posOther; // pos des autres robots
 	bool m_collision; // = true si une collision a lieu lors de la simulation, faux sinon
-	int m_malus; // malus utilisé pour noter les solutions generees
+	float m_malus; // malus utilisé pour noter les solutions generees
 	int m_nbMutations; // utile pour des statistiques
 
 	const float m_maxSpeed;

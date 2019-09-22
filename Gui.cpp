@@ -48,7 +48,8 @@ gui::TextButton::TextButton(float x, float y, float width, float height,
 
 gui::TextButton::~TextButton()
 {
-
+	//this->activeSound.stop();
+	//this->hoverSound.stop();
 }
 
 //Accessors

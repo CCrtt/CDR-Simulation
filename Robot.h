@@ -2,6 +2,7 @@
 #define ROBOT1_H
 
 #include"AlgoGen.h"
+#include"Capteurs.h"
 #include "Point.h"
 #include"BasicFunctions.h"
 #include "constantes.h"
@@ -9,33 +10,9 @@
 
 class robot : public RenderObject
 {
-public:
-	robot(int nbRobots, team team);
-	robot(float x, float y, float angle, sf::Color color, int nbRobots);
-	virtual ~robot();
-	sf::RectangleShape draw();
-	sf::RectangleShape drawTarget();
-	sf::RectangleShape drawTest();
-	void update(sf::Time time);
-	void updateClavier(float vitD, float vitG);
-	void actualise_position(float rightSpeed, float leftSpeed);
-	void actualise_positionTarget(float rightSpeed, float leftSpeed);
-	void frottements(int time);
-
-	bool delay();
-
-	void play(float time_available);
-
-	void render(sf::RenderTarget& target);
-
-	void retarget();
-	bool reachTarget();
-
-protected:
-
 private:
 	//Point m_pos; // position du robot
-	Point m_target;	// position visee
+	Point* m_target;	// position visee
 	int m_length;	// dimensions du rectangle représentant le robot
 	int m_width;
 	float m_leftSpeed; // vitesses des roues droite et gauche
@@ -45,11 +22,37 @@ private:
 	sf::RectangleShape m_shape; // forme du robot pour le rendu graphique
 	sf::RectangleShape m_shapeTest;
 	sf::RectangleShape m_shapeTarget;
-	int m_delay;
+	float m_delay;
+	const team m_team;
+
+	sf::Sprite m_sprite;
+	sf::Texture m_texture;
 
 	Pathfinding* m_IAPthfinding;
+	std::vector <Capteurs*> capteurs;
 	std::vector<Point*> m_posOtherRobot;
 
+	// Functions
+	void actualise_position(float rightSpeed, float leftSpeed);
+	void actualise_positionTarget(float rightSpeed, float leftSpeed);
+	void frottements(float dt);
+
+	void retarget();
+	bool reachTarget();
+	void setTarget(const Point target);
+	void deleteTarget();
+
+	bool delay();
+
+
+public:
+	robot(int nbRobots, team team, sf::Vector2i taille);
+	virtual ~robot();
+
+	void update(const float dt);
+	void updateClavier(float vitD, float vitG);
+	void play(float time_available);
+	void render(sf::RenderTarget& target);
 };
 
 #endif // ROBOT1_H

@@ -2,66 +2,6 @@
 
 #include "AlgoGen.h"
 
-//float radian(float angle)
-//{
-//	return angle / 180 * PI;
-//}
-//
-//float degre(float angle)
-//{
-//	return angle / PI * 180;
-//}
-//
-//float val_abs(float a)
-//{
-//	if (a > 0)
-//		return a;
-//	return -a;
-//}
-//
-//float part_pos(float a)
-//{
-//	if (a > 0)
-//		return a;
-//	return 0;
-//}
-//
-//float dist(float a, float b)
-//{
-//	return sqrt(a * a + b * b);
-//}
-//
-//float dist(Point p)
-//{
-//	return sqrt(p.getX() * p.getX() + p.getY() * p.getY());
-//}
-//
-//float properAngleRad(float ang) // returns the same angle between PI and -PI
-//{
-//	if (ang > PI)
-//		return ang - 2 * PI;
-//	if (ang <= -PI)
-//		return ang + 2 * PI;
-//	return ang;
-//}
-//
-//int sgn(float a)
-//{
-//	if (a >= 0)
-//		return 1;
-//	return -1;
-//}
-//
-//float xconv(int x) { // ces fonctions effectuent les conversions de cm vers l'unite utilisee dans cette simulation
-//	return (float)(WINDOW_WIDTH - x * WINDOW_WIDTH / 3000);
-//}
-//float yconv(int y) {
-//	return (float)(y * WINDOW_HEIGHT / 2000);
-//}
-//float aconv(int angle) {
-//	return (float)(PI - angle * PI / 180);
-//}
-
 
 Point operator+(Point const& a, Point const& b)
 {
@@ -125,8 +65,10 @@ AlgoGen::AlgoGen(const int nbRobots)
 	{
 		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
 		{
-			m_sol[i][j][0] = 0;
-			m_sol[i][j][1] = 0;
+			for (int k = 0; k < 2; ++k)
+			{
+				m_sol[i][j][k] = 0;
+			}
 		}
 	}
 }
@@ -199,13 +141,14 @@ void AlgoGen::end(float& rightSpeed, float& leftSpeed)
 
 void AlgoGen::render(sf::RenderTarget& target)
 {
-	target.draw(m_shapeDebug);
+	//target.draw(m_shapeDebug);
+	return void();
 }
 
 void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed) // setup tout avant de lancer la recherche de trajectoires
 {
 	// mise à jour de la pos des autres robots
-	for (int i = 0; i < robot_pos.size(); ++i)
+	for (size_t i = 0; i < robot_pos.size(); ++i)
 	{
 		if (*robot_pos[i] != actualPos)
 		{
@@ -215,7 +158,7 @@ void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actua
 
 			for (int j = 1; j < NB_TOURS_SIMULES; j++)
 			{
-				m_posOther[i][j] = m_posOther[i][0] + j * (m_posOther[i][0] - lastPos);
+				m_posOther[i][j] = m_posOther[i][0] + (float)j * (m_posOther[i][0] - lastPos);
 			}
 		}
 	}
@@ -297,29 +240,29 @@ void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actua
 	//rends les sol generees conformes
 	for (int j = 0; j < NB_SOL; j++)
 	{
-		if (m_sol[j][0][0] > rightSpeed + 0.5)
-			m_sol[j][0][0] = rightSpeed + 0.5;
-		if (m_sol[j][0][0] < rightSpeed - 1)
-			m_sol[j][0][0] = rightSpeed - 1;
-		if (m_sol[j][0][1] > leftSpeed + 0.5)
-			m_sol[j][0][1] = leftSpeed + 0.5;
-		if (m_sol[j][0][1] < leftSpeed - 1)
-			m_sol[j][0][1] = leftSpeed - 1;
+		if (m_sol[j][0][0] > rightSpeed + 0.5f)
+			m_sol[j][0][0] = rightSpeed + 0.5f;
+		if (m_sol[j][0][0] < rightSpeed - 1.f)
+			m_sol[j][0][0] = rightSpeed - 1.f;
+		if (m_sol[j][0][1] > leftSpeed + 0.5f)
+			m_sol[j][0][1] = leftSpeed + 0.5f;
+		if (m_sol[j][0][1] < leftSpeed - 1.f)
+			m_sol[j][0][1] = leftSpeed - 1.f;
 
 		for (int i = 1; i < NB_TOURS_SIMULES; i++)
 		{
-			if (m_sol[j][i][0] > m_sol[j][i - 1][0] + 0.5)
-				m_sol[j][i][0] = m_sol[j][i - 1][0] + 0.5;
-			if (m_sol[j][i][0] < m_sol[j][i - 1][0] - 1)
-				m_sol[j][i][0] = m_sol[j][i - 1][0] - 1;
-			if (m_sol[j][i][1] > m_sol[j][i - 1][1] + 0.5)
-				m_sol[j][i][1] = m_sol[j][i - 1][1] + 0.5;
-			if (m_sol[j][i][1] < m_sol[j][i - 1][1] - 1)
-				m_sol[j][i][1] = m_sol[j][i - 1][1] - 1;
-			if (m_sol[j][i][0] > 5)
-				m_sol[j][i][0] = 5;
-			if (m_sol[j][i][1] > 5)
-				m_sol[j][i][1] = 5;
+			if (m_sol[j][i][0] > m_sol[j][i - 1][0] + 0.5f)
+				m_sol[j][i][0] = m_sol[j][i - 1][0] + 0.5f;
+			if (m_sol[j][i][0] < m_sol[j][i - 1][0] - 1.f)
+				m_sol[j][i][0] = m_sol[j][i - 1][0] - 1.f;
+			if (m_sol[j][i][1] > m_sol[j][i - 1][1] + 0.5f)
+				m_sol[j][i][1] = m_sol[j][i - 1][1] + 0.5f;
+			if (m_sol[j][i][1] < m_sol[j][i - 1][1] - 1.f)
+				m_sol[j][i][1] = m_sol[j][i - 1][1] - 1.f;
+			if (m_sol[j][i][0] > 5.f)
+				m_sol[j][i][0] = 5.f;
+			if (m_sol[j][i][1] > 5.f)
+				m_sol[j][i][1] = 5.f;
 		}
 	}
 
@@ -357,8 +300,6 @@ void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actua
 void AlgoGen::endGen(float& rightSpeed, float& leftSpeed)
 {
 	// mise à jour des vitesse des roues du robot
-	std::cout << "fin de gen. valeurs trouvees : " << m_sol[0][0][0] << std::endl;
-
 	m_collision = false;
 	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
 
@@ -435,123 +376,133 @@ int AlgoGen::chercheMeilleure(int indiceDepart)
 
 void AlgoGen::genSol(const float& rightSpeed, const float& leftSpeed, const Point& target)
 {
-	//genere une nouvelle solution et la teste
+	// Cette fonction genere une nouvelle solution et la teste
 
-	m_collision = false;
+	// generation d'une nouvelle solution
+	{
+		float a = (float)rand() / RAND_MAX * 10.f;
+		int ind1 = (int)floor(a * a / 100.f * NB_SOL); // genere un entier entre 0 et NB_SOL-1 inclus, avec une proba plus grande pour les petits entiers
+		a = (float)rand() / RAND_MAX * 10.f;
+		int ind2 = (int)floor(a * a / 100.f * NB_SOL);
+		int indCr = (int)floor(rand() / RAND_MAX * (NB_TOURS_SIMULES - 1) + 1);
 
-	float a = (float)rand() / RAND_MAX * 10.0;
-	int ind1 = floor(a * a / 100 * NB_SOL); // genere un entier entre 0 et NB_SOL-1 inclus, avec une proba plus grande pour les petits entiers
-	a = (float)rand() / RAND_MAX * 10.0;
-	int ind2 = floor(a * a / 100 * NB_SOL);
-	int indCr = floor(rand() / RAND_MAX * (NB_TOURS_SIMULES - 1) + 1);
-
-	crossOver(ind1, ind2, indCr);
-	mutate();
-	while ((float)rand() / RAND_MAX < 0.3)
+		crossOver(ind1, ind2, indCr);
 		mutate();
+		while ((float)rand() / RAND_MAX < 0.3)
+			mutate();
 
-	m_nbMutations++;
+		m_nbMutations++;
 
-	//teste si la sol generee est conforme
-	{
-		if (m_sol[NB_SOL][0][0] > rightSpeed + m_maxAcceleration)
-			m_sol[NB_SOL][0][0] = rightSpeed + m_maxAcceleration;
-		if (m_sol[NB_SOL][0][0] < rightSpeed - m_maxAcceleration)
-			m_sol[NB_SOL][0][0] = rightSpeed - m_maxAcceleration;
-		if (m_sol[NB_SOL][0][1] > leftSpeed + m_maxAcceleration)
-			m_sol[NB_SOL][0][1] = leftSpeed + m_maxAcceleration;
-		if (m_sol[NB_SOL][0][1] < leftSpeed - m_maxAcceleration)
-			m_sol[NB_SOL][0][1] = leftSpeed - m_maxAcceleration;
-		if (m_sol[NB_SOL][0][0] > m_maxSpeed)
-			m_sol[NB_SOL][0][0] = m_maxSpeed;
-		if (m_sol[NB_SOL][0][1] > m_maxSpeed)
-			m_sol[NB_SOL][0][1] = m_maxSpeed;
-
-		for (int i = 1; i < NB_TOURS_SIMULES; i++)
+		//teste si la sol generee est conforme
 		{
-			if (m_sol[NB_SOL][i][0] > m_sol[NB_SOL][i - 1][0] + m_maxAcceleration)
-				m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] + m_maxAcceleration;
-			if (m_sol[NB_SOL][i][0] < m_sol[NB_SOL][i - 1][0] - m_maxAcceleration)
-				m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] - m_maxAcceleration;
-			if (m_sol[NB_SOL][i][1] > m_sol[NB_SOL][i - 1][1] + m_maxAcceleration)
-				m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] + m_maxAcceleration;
-			if (m_sol[NB_SOL][i][1] < m_sol[NB_SOL][i - 1][1] - m_maxAcceleration)
-				m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] - m_maxAcceleration;
-			if (m_sol[NB_SOL][i][0] > m_maxSpeed)
-				m_sol[NB_SOL][i][0] = m_maxSpeed;
-			if (m_sol[NB_SOL][i][1] > m_maxSpeed)
-				m_sol[NB_SOL][i][1] = m_maxSpeed;
-			if (m_sol[NB_SOL][i][0] < -m_maxSpeed)
-				m_sol[NB_SOL][i][0] = -m_maxSpeed;
-			if (m_sol[NB_SOL][i][1] < -m_maxSpeed)
-				m_sol[NB_SOL][i][1] = -m_maxSpeed;
+			if (m_sol[NB_SOL][0][0] > rightSpeed + m_maxAcceleration)
+				m_sol[NB_SOL][0][0] = rightSpeed + m_maxAcceleration;
+			if (m_sol[NB_SOL][0][0] < rightSpeed - m_maxAcceleration)
+				m_sol[NB_SOL][0][0] = rightSpeed - m_maxAcceleration;
+			if (m_sol[NB_SOL][0][1] > leftSpeed + m_maxAcceleration)
+				m_sol[NB_SOL][0][1] = leftSpeed + m_maxAcceleration;
+			if (m_sol[NB_SOL][0][1] < leftSpeed - m_maxAcceleration)
+				m_sol[NB_SOL][0][1] = leftSpeed - m_maxAcceleration;
+			if (m_sol[NB_SOL][0][0] > m_maxSpeed)
+				m_sol[NB_SOL][0][0] = m_maxSpeed;
+			if (m_sol[NB_SOL][0][1] > m_maxSpeed)
+				m_sol[NB_SOL][0][1] = m_maxSpeed;
+
+			for (int i = 1; i < NB_TOURS_SIMULES; i++)
+			{
+				if (m_sol[NB_SOL][i][0] > m_sol[NB_SOL][i - 1][0] + m_maxAcceleration)
+					m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] + m_maxAcceleration;
+				if (m_sol[NB_SOL][i][0] < m_sol[NB_SOL][i - 1][0] - m_maxAcceleration)
+					m_sol[NB_SOL][i][0] = m_sol[NB_SOL][i - 1][0] - m_maxAcceleration;
+				if (m_sol[NB_SOL][i][1] > m_sol[NB_SOL][i - 1][1] + m_maxAcceleration)
+					m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] + m_maxAcceleration;
+				if (m_sol[NB_SOL][i][1] < m_sol[NB_SOL][i - 1][1] - m_maxAcceleration)
+					m_sol[NB_SOL][i][1] = m_sol[NB_SOL][i - 1][1] - m_maxAcceleration;
+				if (m_sol[NB_SOL][i][0] > m_maxSpeed)
+					m_sol[NB_SOL][i][0] = m_maxSpeed;
+				if (m_sol[NB_SOL][i][1] > m_maxSpeed)
+					m_sol[NB_SOL][i][1] = m_maxSpeed;
+				if (m_sol[NB_SOL][i][0] < -m_maxSpeed)
+					m_sol[NB_SOL][i][0] = -m_maxSpeed;
+				if (m_sol[NB_SOL][i][1] < -m_maxSpeed)
+					m_sol[NB_SOL][i][1] = -m_maxSpeed;
+			}
 		}
 	}
 
-	//teste la solution NB_SOL et la classe parmi les autres solutions a partir de m_sol deja classe
-	m_malus = 0;
-	m_collision = false;
-
-	m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
-
-	//simulation des tours
-	m_sol[NB_SOL][NB_TOURS_SIMULES][0] = 0;
-
-	for (int i = 0; i < NB_TOURS_SIMULES; i++)
+	//test et evaluation de la nouvelle solution 
 	{
-		actualisePositionTest(m_sol[NB_SOL][i][0] * TEMPS_GEN * 60 / 1000, m_sol[NB_SOL][i][1] * TEMPS_GEN * 60 / 1000, i);
-		m_sol[NB_SOL][NB_TOURS_SIMULES][0] += evalueSol(target) / NB_TOURS_SIMULES;
-		if (m_collision) // si une collision s'est produite, on ne prend pas en compte la solution generee
-		{
-			return;
-		}
-	}
+		m_malus = 0;
+		m_collision = false;
 
-	if (evalueSol(target) < 400)
-		m_sol[NB_SOL][NB_TOURS_SIMULES][0] = evalueSol(target) - 500;
+		m_posTest.Setall(m_posDep.getX(), m_posDep.getY(), m_posDep.getangle());
+
+		//simulation des tours
+		m_sol[NB_SOL][NB_TOURS_SIMULES][0] = 0;
+
+		for (int i = 0; i < NB_TOURS_SIMULES; i++)
+		{
+			if (m_sol[NB_SOL][i][0] < -0.2f && m_sol[NB_SOL][i][1] < -0.2f) // malus si marche arriere
+				m_malus += abs(m_sol[NB_SOL][i][0] + m_sol[NB_SOL][i][1]) * 50.f;
+
+			actualisePositionTest(m_sol[NB_SOL][i][0] * TEMPS_GEN * 60 / 1000, m_sol[NB_SOL][i][1] * TEMPS_GEN * 60 / 1000, i);
+			m_sol[NB_SOL][NB_TOURS_SIMULES][0] += evalueSol(target) / NB_TOURS_SIMULES;
+
+			if (m_collision) // si une collision s'est produite, on ne prend pas en compte la solution generee
+			{
+				return;
+			}
+		}
+
+
+		if (evalueSol(target) < 400) // si la sol trouvee est eloignee de la target, on ne prend en compte que la sol finale
+			m_sol[NB_SOL][NB_TOURS_SIMULES][0] = evalueSol(target) - 500;
+	}
 
 	//distSolTest(NB_SOL);
 
-	//on place la sol trouvee parmi les sol existantes par une recherche dicotomique
-	int classement = NB_SOL;
-	int dico1 = 0;
-	int dico2 = NB_SOL;
-
-	if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[NB_SOL - 1][NB_TOURS_SIMULES][0]) // petite optimisation : souvent la sol generee sera trop mauvaise pour etre gardee
+	//on place la nouvelle solution parmi les solutions existantes par une recherche dicotomique
 	{
-		while (dico2 - dico1 > 1)
+		int classement = NB_SOL;
+		int dico1 = 0;
+		int dico2 = NB_SOL;
+
+		if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[NB_SOL - 1][NB_TOURS_SIMULES][0]) // petite optimisation : souvent la sol generee sera trop mauvaise pour etre gardee
 		{
-			if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[(int)((dico1 + dico2) * 0.5)][NB_TOURS_SIMULES][0])
+			while (dico2 - dico1 > 1)
 			{
-				dico2 = (int)((dico1 + dico2) * 0.5f);
+				if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[(int)((dico1 + dico2) * 0.5)][NB_TOURS_SIMULES][0])
+				{
+					dico2 = (int)((dico1 + dico2) * 0.5f);
+				}
+				else
+				{
+					dico1 = (int)((dico1 + dico2) * 0.5f);
+				}
+			}
+			if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[dico1][NB_TOURS_SIMULES][0])
+			{
+				classement = dico1;
 			}
 			else
 			{
-				dico1 = (int)((dico1 + dico2) * 0.5f);
+				classement = dico2;
 			}
 		}
-		if (m_sol[NB_SOL][NB_TOURS_SIMULES][0] > m_sol[dico1][NB_TOURS_SIMULES][0])
-		{
-			classement = dico1;
-		}
-		else
-		{
-			classement = dico2;
-		}
-	}
 
-	//verification de la distance de la sol generee par rapport aux autres sol. /!\ PAS FONCTIONNEL
-	int d = NB_SOL; //vaut NB_SOL si aucune des autre sol n'est proche de celle generee
-	if (classement < NB_SOL)
-	{
-		d = testDist();
-	}
+		//verification de la distance de la sol generee par rapport aux autres sol. /!\ PAS FONCTIONNEL
+		//int d = NB_SOL; //vaut NB_SOL si aucune des autre sol n'est proche de celle generee
+		//if (classement < NB_SOL)
+		//{
+		//	d = testDist();
+		//}
 
-	//on reconstitue alors le tableau des sol classe avec la nouvelle sol
-	while (/*classement<=d && */classement != NB_SOL)
-	{
-		swapSol(classement, NB_SOL);
-		classement++;
+		//on reconstitue alors le tableau des solutions classé avec la nouvelle solution
+		while (/*classement<=d && */classement != NB_SOL)
+		{
+			swapSol(classement, NB_SOL);
+			classement++;
+		}
 	}
 }
 
@@ -636,23 +587,23 @@ void AlgoGen::actualisePositionTest(const float& rightSpeed, const float& leftSp
 		R = ECART_ROUE / 2 * (rightSpeed + leftSpeed) / (leftSpeed - rightSpeed); // rayon du cercle
 		cx = m_posTest.getX() + R * sin(m_posTest.getangle());
 		cy = m_posTest.getY() + R * cos(m_posTest.getangle());
-		d = (leftSpeed + rightSpeed) * 0.5;
+		d = (leftSpeed + rightSpeed) * 0.5f;
 
 		// mise à jour des coordonnées du robot
 		if (leftSpeed + rightSpeed != 0) {
 			m_posTest.Setangle(m_posTest.getangle() - d / R);//m_angle -= d/R;
 		}
 		else {
-			m_posTest.Setangle(m_posTest.getangle() + rightSpeed * 2.0 / ECART_ROUE); //m_angle += rightSpeed*2.0 / ECART_ROUE;
+			m_posTest.Setangle(m_posTest.getangle() + rightSpeed * 2.f / ECART_ROUE); //m_angle += rightSpeed*2.0 / ECART_ROUE;
 		}
 
 		if (m_posTest.getangle() > PI)
 		{
-			m_posTest.Setangle(m_posTest.getangle() - 2 * PI); //m_angle -= 2*PI;
+			m_posTest.Setangle(m_posTest.getangle() - 2.f * PI); //m_angle -= 2*PI;
 		}
 		else if (m_posTest.getangle() <= -PI)
 		{
-			m_posTest.Setangle(m_posTest.getangle() + 2 * PI); //m_sangle += 2*PI;
+			m_posTest.Setangle(m_posTest.getangle() + 2.f * PI); //m_sangle += 2*PI;
 		}
 
 		m_posTest.setX(cx - R * sin(m_posTest.getangle())); //m_xPos = cx - R * sin(m_angle);
@@ -674,7 +625,7 @@ void AlgoGen::testCollisionTest()
 	if (m_posTest.getX() < robotLength)
 	{
 		//cout << "collision1" << endl;
-		m_malus += (robotLength - m_posTest.getX()) / 20;
+		m_malus += (robotLength - m_posTest.getX()) / 20.f;
 		testLeftCollisionTest();
 	}
 	else if (m_posTest.getX() > WINDOW_WIDTH - robotLength)
@@ -703,7 +654,7 @@ void AlgoGen::testCollisionTest()
 
 void AlgoGen::testUpCollisionTest()
 {
-	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
+	float diag = (float)sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
@@ -760,7 +711,7 @@ void AlgoGen::testUpCollisionTest()
 
 void AlgoGen::testBotCollisionTest()
 {
-	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
+	float diag = (float)sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
@@ -817,7 +768,7 @@ void AlgoGen::testBotCollisionTest()
 
 void AlgoGen::testLeftCollisionTest()
 {
-	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
+	float diag = (float)sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
@@ -875,11 +826,11 @@ void AlgoGen::testLeftCollisionTest()
 
 void AlgoGen::testRightCollisionTest()
 {
-	float diag = sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
+	float diag = (float)sqrt(robotWidth * robotWidth + robotLength * robotLength) / 2;
 
 	// 1 : coin en bas à droite
 
-	float angleCar = atan(1.1);//atan((float) (robotLength)/robotWidth);
+	float angleCar = (float)atan(1.1);//atan((float) (robotLength)/robotWidth);
 	float angle = m_posTest.getangle() - angleCar;
 
 	float x1 = m_posTest.getX() + diag * cos(angle);

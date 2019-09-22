@@ -11,6 +11,8 @@ public:
 	RenderObject(float x, float y, float angle);
 	~RenderObject();
 
+	Point getPos() const;
+
 	virtual void render(sf::RenderTarget& target) = 0;
 };
 

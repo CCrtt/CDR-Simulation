@@ -40,7 +40,7 @@ public:
 
 	//Accessors
 	const bool& getQuit() const;
-	const bool getKeytime();
+	bool getKeytime();
 
 	//Functions
 	void endState();

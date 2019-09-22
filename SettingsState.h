@@ -2,6 +2,7 @@
 
 #include "State.h"
 #include "Gui.h"
+#include"Terrain.h"
 
 class SettingsState :
 	public State

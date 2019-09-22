@@ -12,3 +12,8 @@ RenderObject::RenderObject(float x, float y, float angle) : m_pos(x, y, angle)
 RenderObject::~RenderObject()
 {
 }
+
+Point RenderObject::getPos() const
+{
+	return m_pos;
+}

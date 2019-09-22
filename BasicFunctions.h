@@ -24,4 +24,5 @@ float xconv(int x);
 float yconv(int y);
 float aconv(int angle);
 
+float CmToPx(float dist);
 

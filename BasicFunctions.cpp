@@ -60,3 +60,8 @@ float yconv(int y) {
 float aconv(int angle) {
 	return (float)(PI - angle * PI / 180);
 }
+
+float CmToPx(float dist)
+{
+	return dist * 2;
+}

@@ -156,7 +156,7 @@ void MainMenuState::updateTextButtons()
 	//Quit the game
 	if (this->buttons["EXIT_STATE"]->isPressed())
 	{
-		//this->backgroundMusic.stop();
+		this->backgroundMusic.stop();
 		this->endState();
 	}
 }

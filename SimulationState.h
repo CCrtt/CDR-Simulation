@@ -3,11 +3,17 @@
 #include"State.h"
 #include"Robot.h"
 #include"constantes.h"
+#include"Terrain.h"
+#include"PauseMenu.h"
 
 class SimulationState
 	: public State
 {
 private:
+	// variables
+	sf::Font pauseMenuFont;
+	PauseMenu* pauseMenu;
+
 	sf::RectangleShape backGround;
 	sf::Texture backGroundTexture;
 
@@ -18,16 +24,29 @@ private:
 	sf::Time frameTime;
 	sf::Time genTime;
 
+	const Terrain terrain;
+
 	const int m_nbRobotYellow;
 	const int m_nbRobotPurple;
 	std::vector <robot*> m_robotTeamYellow;
 	std::vector <robot*> m_robotTeamPurple;
-	//robot robot1;
-	//robot robot2;
 
+	//Point* posRobots;
+
+	const sf::Vector2f cmToPx;
+
+	// private functions
 	virtual void initKeybinds();
 	void initBackGround();
-	void initRobot();
+	void initRobot(sf::RenderWindow* window);
+	void initPauseMenu();
+	void initFont();
+
+	void resetPauseMenu();
+	void updatePauseMenuTextButtons();
+
+	void updatePosRobots();
+	void updateRobots(const float& dt);
 
 public:
 	SimulationState(sf::RenderWindow* window, std::map<std::string, int>* supportedKeys, std::stack<State*>* states);

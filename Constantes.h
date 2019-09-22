@@ -2,7 +2,7 @@
 #ifndef CONSTANTES_H_INCLUDED
 #define CONSTANTES_H_INCLUDED
 
-#define PI 3.141593
+const float PI = 3.141593f;
 
 enum team { NONE = 0, PURPLE, YELLOW };
 
@@ -14,6 +14,8 @@ enum team { NONE = 0, PURPLE, YELLOW };
 //constantes du robot
 const int robotLength = 110;
 const int robotWidth = 100;
+const int tailleTextureRobotX = 1000;
+const int tailleTextureRobotY = 1000;
 #define ECART_ROUE 110
 #define MAX_ACCELERATION 1
 
@@ -26,7 +28,7 @@ const int robotWidth = 100;
 //genetique
 #define NB_SOL 5
 #define NB_TOURS_1 5
-#define NB_TOURS_SIMULES 10
+#define NB_TOURS_SIMULES 12
 #define TEMPS_GEN 150
 
 const int temps_gen = 150;
