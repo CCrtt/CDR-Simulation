@@ -65,3 +65,45 @@ float CmToPx(float dist)
 {
 	return dist * 2;
 }
+
+
+Point operator+(Point const& a, Point const& b)
+{
+	Point result;
+
+	result.Setall(a.getX() + b.getX(), a.getY() + b.getY(), a.getangle() + b.getangle());
+
+	return result;
+}
+
+Point operator-(Point const& a, Point const& b)
+{
+	Point result;
+
+	result.Setall(a.getX() - b.getX(), a.getY() - b.getY(), a.getangle() - b.getangle());
+
+	return result;
+}
+
+Point operator*(float const t, Point const& a)
+{
+	Point result;
+
+	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
+
+	return result;
+}
+
+Point operator*(Point const& a, float const t)
+{
+	Point result;
+
+	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
+
+	return result;
+}
+
+bool operator!=(Point const& a, Point const& b)
+{
+	return a.getX() != b.getX() || a.getY() != b.getY() || a.getangle() != b.getangle();
+}

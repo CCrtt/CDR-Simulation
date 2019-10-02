@@ -45,7 +45,6 @@ private:
 	void resetPauseMenu();
 	void updatePauseMenuTextButtons();
 
-	void updatePosRobots();
 	void updateRobots(const float& dt);
 
 public:

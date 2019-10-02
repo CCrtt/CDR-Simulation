@@ -44,6 +44,7 @@ private:
 
 	bool delay();
 
+	void updatePosOtherRobots(const std::vector<Point>& posRobots);
 
 public:
 	robot(int nbRobots, team team, sf::Vector2i taille);
@@ -51,7 +52,7 @@ public:
 
 	void update(const float dt);
 	void updateClavier(float vitD, float vitG);
-	void play(float time_available);
+	void play(float time_available, const std::vector<Point>& posRobots);
 	void render(sf::RenderTarget& target);
 };
 

@@ -3,49 +3,8 @@
 #include "AlgoGen.h"
 
 
-Point operator+(Point const& a, Point const& b)
-{
-	Point result;
-
-	result.Setall(a.getX() + b.getX(), a.getY() + b.getY(), a.getangle() + b.getangle());
-
-	return result;
-}
-
-Point operator-(Point const& a, Point const& b)
-{
-	Point result;
-
-	result.Setall(a.getX() - b.getX(), a.getY() - b.getY(), a.getangle() - b.getangle());
-
-	return result;
-}
-
-Point operator*(float const t, Point const& a)
-{
-	Point result;
-
-	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
-
-	return result;
-}
-
-Point operator*(Point const& a, float const t)
-{
-	Point result;
-
-	result.Setall(a.getX() * t, a.getY() * t, a.getangle() * t);
-
-	return result;
-}
-
-bool operator!=(Point const& a, Point const& b)
-{
-	return a.getX() == b.getX() && a.getY() == b.getY() && a.getangle() == b.getangle();
-}
-
 AlgoGen::AlgoGen(const int nbRobots) 
-	: m_posTest(), m_posDep(), m_posOther(), m_clockSearchLeft(), m_timeSearchLeft(), m_nbRobots(nbRobots), m_maxSpeed(10.f), m_maxAcceleration(0.5f)
+	: m_posTest(), m_posDep(), m_posOther(nbRobots, nbToursSimules), m_clockSearchLeft(), m_timeSearchLeft(), m_nbRobots(nbRobots), m_maxSpeed(10.f), m_maxAcceleration(0.5f)
 {
 	m_clockSearchLeft.restart();
 	m_timeSearchLeft = sf::Time(sf::milliseconds(0));
@@ -54,16 +13,9 @@ AlgoGen::AlgoGen(const int nbRobots)
 	m_malus = 0;
 	m_nbMutations = 0;
 
-	m_posOther = new Point * [nbRobots] {0};
-
-	for (int i = 0; i < nbRobots - 1; i++)
-	{
-		m_posOther[i] = new Point[nbToursSimules];
-	}
-
 	for (int i = 0; i < NB_SOL + 1; i++)
 	{
-		for (int j = 0; j < NB_TOURS_SIMULES + 1; j++)
+		for (int j = 0; j < nbToursSimules + 1; j++)
 		{
 			for (int k = 0; k < 2; ++k)
 			{
@@ -77,27 +29,27 @@ AlgoGen::~AlgoGen()
 {
 	if (m_posOther)
 	{
-		for (int i = 0; i < m_nbRobots; i++)
-		{
-			if (m_posOther[i])
-				delete[] m_posOther[i];
-		}
+		delete m_posOther[0];
 
-		delete[] m_posOther;
+		/*for (int i = 0; i < m_nbRobots - 1; ++i)
+		{
+			delete m_posOther[i];
+			//if (m_posOther[i])
+				//delete[] m_posOther[i];
+		}*/
+
+		//delete[] m_posOther;
 	}
 	m_posOther = NULL;
 }
 
-void AlgoGen::init(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed)
+void AlgoGen::init(const std::vector <Point*>& posOtherRobots, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed)
 {
-	//m_clockSearchLeft.restart();
-	//m_timeSearchLeft = sf::Time(sf::milliseconds(temps_gen));
-
-	startGen(robot_pos, actualPos, target, rightSpeed, leftSpeed);
-
+	m_posOther.update(posOtherRobots);
+	startGen(posOtherRobots, actualPos, target, rightSpeed, leftSpeed);
 }
 
-void AlgoGen::run(float timeAvailable, float& rightSpeed, float& leftSpeed, const Point& actual_pos, const Point& target, const std::vector <Point*>& robot_pos)
+void AlgoGen::run(float timeAvailable, float& rightSpeed, float& leftSpeed, const Point& actual_pos, const Point& target, const std::vector <Point*>& posOtherRobots)
 {
 	sf::Clock timeLeft;
 	timeLeft.restart();
@@ -116,7 +68,7 @@ void AlgoGen::run(float timeAvailable, float& rightSpeed, float& leftSpeed, cons
 		else
 		{
 			end(rightSpeed, leftSpeed); // Application du resultat trouvé
-			init(robot_pos, actual_pos, target, rightSpeed, leftSpeed); // Preparation a la prochaine recherche
+			init(posOtherRobots, actual_pos, target, rightSpeed, leftSpeed); // Preparation a la prochaine recherche
 
 			m_clockSearchLeft.restart();
 			m_timeSearchLeft = sf::Time(sf::milliseconds(temps_gen));
@@ -147,22 +99,6 @@ void AlgoGen::render(sf::RenderTarget& target)
 
 void AlgoGen::startGen(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed) // setup tout avant de lancer la recherche de trajectoires
 {
-	// mise à jour de la pos des autres robots
-	for (size_t i = 0; i < robot_pos.size(); ++i)
-	{
-		if (*robot_pos[i] != actualPos)
-		{
-			Point lastPos = m_posOther[i][0];
-
-			m_posOther[i][0] = *robot_pos[i];
-
-			for (int j = 1; j < NB_TOURS_SIMULES; j++)
-			{
-				m_posOther[i][j] = m_posOther[i][0] + (float)j * (m_posOther[i][0] - lastPos);
-			}
-		}
-	}
-
 	m_posTest.Setall(actualPos.getX(), actualPos.getY(), actualPos.getangle());
 
 	/*if (reachTarget())
@@ -442,8 +378,8 @@ void AlgoGen::genSol(const float& rightSpeed, const float& leftSpeed, const Poin
 
 		for (int i = 0; i < NB_TOURS_SIMULES; i++)
 		{
-			if (m_sol[NB_SOL][i][0] < -0.2f && m_sol[NB_SOL][i][1] < -0.2f) // malus si marche arriere
-				m_malus += abs(m_sol[NB_SOL][i][0] + m_sol[NB_SOL][i][1]) * 50.f;
+			//if (m_sol[NB_SOL][i][0] < -0.2f && m_sol[NB_SOL][i][1] < -0.2f) // malus si marche arriere
+			//	m_malus += abs(m_sol[NB_SOL][i][0] + m_sol[NB_SOL][i][1]) * 50.f;
 
 			actualisePositionTest(m_sol[NB_SOL][i][0] * TEMPS_GEN * 60 / 1000, m_sol[NB_SOL][i][1] * TEMPS_GEN * 60 / 1000, i);
 			m_sol[NB_SOL][NB_TOURS_SIMULES][0] += evalueSol(target) / NB_TOURS_SIMULES;
@@ -459,7 +395,7 @@ void AlgoGen::genSol(const float& rightSpeed, const float& leftSpeed, const Poin
 			m_sol[NB_SOL][NB_TOURS_SIMULES][0] = evalueSol(target) - 500;
 	}
 
-	//distSolTest(NB_SOL);
+	//distSolTest(NB_SOL); //ne sert a rien, amelioration potentielle
 
 	//on place la nouvelle solution parmi les solutions existantes par une recherche dicotomique
 	{

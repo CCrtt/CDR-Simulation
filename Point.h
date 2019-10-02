@@ -1,6 +1,7 @@
 #pragma once
 #include"constantes.h"
 
+
 class Point
 {
 public:
@@ -39,5 +40,4 @@ private:
 	float m_x, m_y;
 	float m_angle;
 };
-
 

@@ -40,11 +40,11 @@ void SimulationState::initRobot(sf::RenderWindow* window)
 {
 	for (int i = 0; i < m_nbRobotPurple; i++)
 	{
-		m_robotTeamPurple.push_back(new robot(2, team::PURPLE, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
+		m_robotTeamPurple.push_back(new robot(m_nbRobotPurple + m_nbRobotYellow, team::PURPLE, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
 	}
 	for (int i = 0; i < m_nbRobotYellow; i++)
 	{
-		m_robotTeamPurple.push_back(new robot(2, team::YELLOW, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
+		m_robotTeamYellow.push_back(new robot(m_nbRobotPurple + m_nbRobotYellow, team::YELLOW, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
 	}
 
 	this->frameTime = frameClock.getElapsedTime();
@@ -53,7 +53,7 @@ void SimulationState::initRobot(sf::RenderWindow* window)
 
 void SimulationState::initPauseMenu()
 {
-	this->pauseMenu = NULL;
+	this->pauseMenu = new PauseMenu(*this->window, this->pauseMenuFont);
 }
 
 void SimulationState::initFont()
@@ -78,35 +78,19 @@ void SimulationState::updatePauseMenuTextButtons()
 		this->endState();
 }
 
-void SimulationState::updatePosRobots()
-{
-	for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
-	{
-		//posRobots = m_robotTeamPurple[i]->getPos();
-		//m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
-	}
-	for (size_t i = 0; i < m_robotTeamYellow.size(); ++i)
-	{
-		m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
-
-	}
-}
-
 void SimulationState::updateRobots(const float& dt)
 {
 	if (totalClock <= 100.f)
 	{
 		for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
 		{
-			m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
+			m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow), posRobots());
 		}
 		for (size_t i = 0; i < m_robotTeamYellow.size(); ++i)
 		{
-			m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
+			m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow), posRobots());
 
 		}
-
-		//std::cout << frameTime.asMilliseconds() << std::endl;
 
 		for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
 		{
@@ -147,6 +131,9 @@ SimulationState::~SimulationState()
 	{
 		delete m_robotTeamYellow[i];
 	}
+
+	if (this->pauseMenu)
+		delete this->pauseMenu;
 }
 
 // Functions
@@ -156,12 +143,15 @@ std::vector<Point> SimulationState::posRobots()
 
 	for (int i = 0; i < m_nbRobotPurple; i++)
 	{
-		ret.push_back(m_robotTeamPurple[i]->getPos());
+		if (m_robotTeamPurple[i]){}
+			ret.push_back(m_robotTeamPurple[i]->getPos());
 	}
 
 	for (int i = 0; i < m_nbRobotYellow; i++)
 	{
-		ret.push_back(m_robotTeamYellow[i]->getPos());
+		if (m_robotTeamYellow[i]){}
+			ret.push_back(m_robotTeamYellow[i]->getPos());
+		
 	}
 
 	return ret;
@@ -173,7 +163,7 @@ void SimulationState::updateInput(const float& dt)
 	{
 		if (!this->paused)
 		{
-			resetPauseMenu();
+			//resetPauseMenu();
 			this->pauseState();
 		}
 		else
@@ -222,13 +212,13 @@ void SimulationState::render(sf::RenderTarget* target)
 
 
 		//REMOVE LATER
-		sf::Text mouseText;
+		/*sf::Text mouseText;
 		mouseText.setPosition(this->mousePosView.x, this->mousePosView.y - 15);
 		mouseText.setFont(this->pauseMenuFont);
 		mouseText.setCharacterSize(12);
 		std::stringstream ss;
 		ss << this->mousePosView.x << " " << this->mousePosView.y;
 		mouseText.setString(ss.str());
-		target->draw(mouseText);
+		target->draw(mouseText);*/
 	}
 }

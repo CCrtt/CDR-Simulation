@@ -80,7 +80,9 @@ robot::robot(int nbRobots, team team, sf::Vector2i taille)
 	}
 
 	m_IAPthfinding = new AlgoGen(nbRobots);
-	m_posOtherRobot.push_back(new Point);
+
+	for (int i = 0; i < nbRobots - 1; ++i)
+		m_posOtherRobot.push_back(new Point(0.f, 0.f, 0.f));
 }
 
 robot::~robot()
@@ -91,10 +93,15 @@ robot::~robot()
 	for (size_t i = 0; i < m_posOtherRobot.size(); ++i)
 	{
 		delete m_posOtherRobot[i];
+		m_posOtherRobot[i] = NULL;
 	}
 	
-	if (m_target)
-		delete m_target;
+	/*if (m_posOtherRobot[0])
+		delete (m_posOtherRobot[0]);
+	m_posOtherRobot[0] = NULL;*/
+
+	if (this->m_target)
+		delete this->m_target;
 }
 
 void robot::update(const float dt)
@@ -232,8 +239,40 @@ bool robot::delay()
 	return false;
 }
 
-void robot::play(float time_available)
+void robot::updatePosOtherRobots(const std::vector<Point>& posRobots)
 {
+	/*for (int i = 0; i < posRobots.size(); i++)
+	{
+		std::cout << posRobots[i].getX() << std::endl;
+	}*/
+
+	if (posRobots.size() > m_posOtherRobot.size() + 1)
+	{
+		std::cout << "erreur de taille de posOtherRobots" << std::endl;
+	}
+
+	int ind = 0;
+	for (size_t i = 0; i < posRobots.size(); ++i)
+	{
+		if (this->m_pos != posRobots[i])
+		{
+			*this->m_posOtherRobot[ind] = posRobots[i];
+			++ind;
+		}
+	}
+
+	/*if (posRobots.size() != m_posOtherRobot.size() + 1)
+	{
+		std::cout << "erreur de taille de posOtherRobots" << std::endl;
+	}
+	else
+		std::cout << "ok" << std::endl;*/
+}
+
+void robot::play(float time_available, const std::vector<Point>& posRobots)
+{
+	updatePosOtherRobots(posRobots);
+
 	if (m_target)
 		m_IAPthfinding->run(time_available, m_rightSpeed, m_leftSpeed, m_pos, *m_target, m_posOtherRobot);
 	else

@@ -1,6 +1,7 @@
 #pragma once
 #include"Pathfinding.h"
 #include"BasicFunctions.h"
+#include"PosOtherRobots.h"
 
 float properAngleRad(float ang);
 
@@ -17,7 +18,7 @@ private:
 	//std::vector <sf::Vector2f*> m_posOther; // pos des autres robots
 	const int m_nbRobots;
 
-	Point** m_posOther; // pos des autres robots
+	PosOtherRobots m_posOther; // pos des autres robots
 	bool m_collision; // = true si une collision a lieu lors de la simulation, faux sinon
 	float m_malus; // malus utilisé pour noter les solutions generees
 	int m_nbMutations; // utile pour des statistiques
@@ -32,8 +33,8 @@ public:
 	AlgoGen(const int nbRobots);
 	virtual ~AlgoGen();
 
-	virtual void init(const std::vector <Point*>& robot_pos, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed);
-	virtual void run(float timeAvailable, float& rightSpeed, float& leftSpeed, const Point& actual_pos, const Point& target, const std::vector <Point*>& robot_pos);
+	virtual void init(const std::vector <Point*>& posOtherRobots, const Point& actualPos, const Point& target, const float& rightSpeed, const float& leftSpeed);
+	virtual void run(float timeAvailable, float& rightSpeed, float& leftSpeed, const Point& actual_pos, const Point& target, const std::vector <Point*>& posOtherRobots = std::vector <Point*>());
 	virtual void end(float& rightSpeed, float& leftSpeed);
 
 	virtual void render(sf::RenderTarget& target);
