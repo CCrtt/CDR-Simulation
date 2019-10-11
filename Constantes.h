@@ -12,8 +12,6 @@ enum team { NONE = 0, PURPLE, YELLOW };
 #define FPS 60
 
 //constantes du robot
-const int robotLength = 110;
-const int robotWidth = 100;
 const int tailleTextureRobotX = 1000;
 const int tailleTextureRobotY = 1000;
 #define ECART_ROUE 110
@@ -22,13 +20,14 @@ const int tailleTextureRobotY = 1000;
 //constantes de la table
 #define TABLE_LENGTH 3010
 #define TABLE_HEIGTH 2150
+const int tableLength = 300; //en cm
+const int tableWidth = 200;
 
 #define NB_PALETS 0
 
 //genetique
-#define NB_SOL 5
+#define NB_SOL 10
 #define NB_TOURS_1 5
-#define NB_TOURS_SIMULES 12
 #define TEMPS_GEN 150
 
 const int temps_gen = 150;

@@ -8,7 +8,7 @@ protected:
 
 public:
 	RenderObject();
-	RenderObject(float x, float y, float angle);
+	RenderObject(Point pos);
 	~RenderObject();
 
 	Point getPos() const;

@@ -20,40 +20,41 @@ void SimulationState::initKeybinds()
 	ifs.close();
 }
 
-void SimulationState::initBackGround()
-{
-	this->backGround.setSize(
-		sf::Vector2f(
-			static_cast<float>(this->window->getSize().x),
-			static_cast<float>(this->window->getSize().y)
-		)
-	);
-	if (!this->backGroundTexture.loadFromFile("Ressources/Images/Terrain.png"))
-	{
-		std::cout << "loading error" << std::endl;
-	}
-	
-	this->backGround.setTexture(&backGroundTexture);
-}
-
 void SimulationState::initRobot(sf::RenderWindow* window)
 {
 	for (int i = 0; i < m_nbRobotPurple; i++)
 	{
-		m_robotTeamPurple.push_back(new robot(2, team::PURPLE, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
+		m_robotTeamPurple.push_back(new robot(m_nbRobotPurple + m_nbRobotYellow, team::PURPLE, sf::Vector2f(27.f * (int)cmToPx.x, 27.f * (int)cmToPx.y), i, &this->terrain, i));
+		infoRobot.push_back(InfoRobot(
+			sf::Vector2f(50.f, 50.f + window->getSize().y * 0.5f * i),
+			sf::Vector2f(window->getSize().x * 0.3f, window->getSize().y * 0.43f),
+			this->pauseMenuFont
+		)
+		);
 	}
 	for (int i = 0; i < m_nbRobotYellow; i++)
 	{
-		m_robotTeamPurple.push_back(new robot(2, team::YELLOW, sf::Vector2i(27 * (int)cmToPx.x, 27 * (int)cmToPx.y)));
+		m_robotTeamYellow.push_back(new robot(m_nbRobotPurple + m_nbRobotYellow, team::YELLOW, sf::Vector2f(27.f * (int)cmToPx.x, 27.f * (int)cmToPx.y), i, &this->terrain, i));
+		infoRobot.push_back(InfoRobot(
+			sf::Vector2f(window->getSize().x - window->getSize().x * 0.3f - 50.f, 50.f + window->getSize().y * 0.5f * i),
+			sf::Vector2f(window->getSize().x * 0.3f, window->getSize().y * 0.43f),
+			this->pauseMenuFont
+		)
+		);
 	}
 
 	this->frameTime = frameClock.getElapsedTime();
 	this->genTime = genClock.getElapsedTime();
 }
 
+void SimulationState::initGobelets()
+{
+	//m_gobelets.push_back(Gobelet(Point(500, 500), RED));
+}
+
 void SimulationState::initPauseMenu()
 {
-	this->pauseMenu = NULL;
+	this->pauseMenu = new PauseMenu(*this->window, this->pauseMenuFont);
 }
 
 void SimulationState::initFont()
@@ -78,44 +79,30 @@ void SimulationState::updatePauseMenuTextButtons()
 		this->endState();
 }
 
-void SimulationState::updatePosRobots()
-{
-	for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
-	{
-		//posRobots = m_robotTeamPurple[i]->getPos();
-		//m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
-	}
-	for (size_t i = 0; i < m_robotTeamYellow.size(); ++i)
-	{
-		m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
-
-	}
-}
-
 void SimulationState::updateRobots(const float& dt)
 {
 	if (totalClock <= 100.f)
 	{
 		for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
 		{
-			m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
+			m_robotTeamPurple[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow), posRobots());
 		}
 		for (size_t i = 0; i < m_robotTeamYellow.size(); ++i)
 		{
-			m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow));
+			m_robotTeamYellow[i]->play(16.f / (m_nbRobotPurple + m_nbRobotYellow), posRobots());
 
 		}
-
-		//std::cout << frameTime.asMilliseconds() << std::endl;
 
 		for (size_t i = 0; i < m_robotTeamPurple.size(); ++i)
 		{
 			m_robotTeamPurple[i]->update(dt);
+			infoRobot[i].updateInfo(m_robotTeamPurple[i]);
 		}
 
 		for (size_t i = 0; i < m_robotTeamYellow.size(); ++i)
 		{
 			m_robotTeamYellow[i]->update(dt);
+			infoRobot[i + m_nbRobotPurple].updateInfo(m_robotTeamYellow[i]);
 		}
 	}
 	else
@@ -125,16 +112,17 @@ void SimulationState::updateRobots(const float& dt)
 
 // Constructor/Destructor
 SimulationState::SimulationState(sf::RenderWindow* window, std::map<std::string, int>* supportedKeys, std::stack<State*>* states)
-	: State(window, supportedKeys, states), terrain(window->getSize()), m_nbRobotPurple(1), m_nbRobotYellow(1), 
-	cmToPx((float) window->getSize().x / 300.f, (float)window->getSize().y / 200.f)
+	: State(window, supportedKeys, states), 
+	terrain(window->getSize()), 
+	m_nbRobotPurple(2), m_nbRobotYellow(2), 
+	cmToPx((float) window->getSize().x / 300.f, (float)window->getSize().y / 200.f),
+	debug(true)
 {
-	//this->posRobots = new Point[m_nbRobotPurple + m_nbRobotYellow];
-
 	this->initFont();
 	this->initKeybinds();
 	this->initPauseMenu();
-	this->initBackGround();
 	this->initRobot(window);
+	this->initGobelets();
 }
 
 SimulationState::~SimulationState()
@@ -147,21 +135,27 @@ SimulationState::~SimulationState()
 	{
 		delete m_robotTeamYellow[i];
 	}
+
+	if (this->pauseMenu)
+		delete this->pauseMenu;
 }
 
-// Functions
+// Public Functions
 std::vector<Point> SimulationState::posRobots()
 {
 	std::vector<Point> ret;
 
 	for (int i = 0; i < m_nbRobotPurple; i++)
 	{
-		ret.push_back(m_robotTeamPurple[i]->getPos());
+		if (m_robotTeamPurple[i]){}
+			ret.push_back(m_robotTeamPurple[i]->getPos());
 	}
 
 	for (int i = 0; i < m_nbRobotYellow; i++)
 	{
-		ret.push_back(m_robotTeamYellow[i]->getPos());
+		if (m_robotTeamYellow[i]){}
+			ret.push_back(m_robotTeamYellow[i]->getPos());
+		
 	}
 
 	return ret;
@@ -173,7 +167,7 @@ void SimulationState::updateInput(const float& dt)
 	{
 		if (!this->paused)
 		{
-			resetPauseMenu();
+			//resetPauseMenu();
 			this->pauseState();
 		}
 		else
@@ -205,7 +199,7 @@ void SimulationState::render(sf::RenderTarget* target)
 	if (!target)
 		target = this->window;
 
-	target->draw(this->backGround);
+	terrain.render(*target);
 
 	for (size_t i = 0; i < m_robotTeamPurple.size(); ++i) {
 		m_robotTeamPurple[i]->render(*target);
@@ -214,21 +208,29 @@ void SimulationState::render(sf::RenderTarget* target)
 		m_robotTeamYellow[i]->render(*target);
 	}
 
-	terrain.render(*window);
+	for (size_t i = 0; i < m_gobelets.size(); i++)
+	{
+		m_gobelets[i].render(*target);
+	}
+
+	for (size_t i = 0; i < infoRobot.size(); i++)
+	{
+		infoRobot[i].render(*target);
+	}
 
 	if (this->paused) // Pause menu render
 	{
 		this->pauseMenu->render(*target);
 
-
+		
 		//REMOVE LATER
-		sf::Text mouseText;
+		/*sf::Text mouseText;
 		mouseText.setPosition(this->mousePosView.x, this->mousePosView.y - 15);
 		mouseText.setFont(this->pauseMenuFont);
 		mouseText.setCharacterSize(12);
 		std::stringstream ss;
 		ss << this->mousePosView.x << " " << this->mousePosView.y;
 		mouseText.setString(ss.str());
-		target->draw(mouseText);
+		target->draw(mouseText);*/
 	}
 }

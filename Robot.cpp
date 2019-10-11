@@ -5,21 +5,22 @@
 using namespace std;
 
 
-robot::robot(int nbRobots, team team, sf::Vector2i taille) 
+robot::robot(int nbRobots, team team, sf::Vector2f taille, int idRobot, const Terrain* terrain, int id) 
 	: m_target(NULL), 
-	m_maxAcceleration(0.5f), m_maxSpeed(10.f),
-	m_team(team)
+	m_maxAcceleration(.4f), m_maxDeceleration(1.f), m_maxSpeed(5.f),
+	m_team(team),
+	m_terrain(terrain),
+	id(id)
 {
 	switch (team)
 	{
 	case (PURPLE):
-		m_pos.Setall(xconv(250), yconv(705), aconv(90));
-		//m_target->Setall(xconv(250), yconv(705), aconv(90));
+
+		m_pos.Setall(xconv(2550), yconv(705 + idRobot * 500), aconv(90));
 		break;
 
 	case(YELLOW):
-		m_pos.Setall(xconv(2550), yconv(705), aconv(90));
-		//m_target->Setall(xconv(2500), yconv(705), aconv(90));
+		m_pos.Setall(xconv(250), yconv(705 + idRobot * 500), aconv(90));
 		break;
 
 	default:
@@ -32,55 +33,63 @@ robot::robot(int nbRobots, team team, sf::Vector2i taille)
 	m_leftSpeed = 0.f;
 	m_delay = 2000.f;
 
-	// creation de m_shape, m_shapeTest, m_shapeTarget
+	// creation de m_shapeTest, m_shapeTarget
 	{
-		sf::RectangleShape shape(sf::Vector2f((float)m_length, (float)m_width));
-		shape.setOrigin(sf::Vector2f((float)m_length / 2.f, (float)m_width / 2.f));
-		shape.setOutlineColor(sf::Color::Black);
-		shape.setOutlineThickness(2);
-		shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-		shape.setRotation(-degre(m_pos.getangle()) - 90);
+		m_shapeTest.setSize(sf::Vector2f((float)m_length, (float)m_width));
+		m_shapeTest.setFillColor(sf::Color(20, 100, 20, 170));
+		m_shapeTest.setPosition(sf::Vector2f(m_pos.getX() + 100, m_pos.getY()));
+		m_shapeTest.setRotation(-degre(m_pos.getangle()) - 90);
 
-		m_shape = shape;
-
-		shape.setFillColor(sf::Color(20, 100, 20, 170));
-		shape.setPosition(sf::Vector2f(m_pos.getX() + 100, m_pos.getY()));
-		shape.setRotation(-degre(m_pos.getangle()) - 90);
-
-		m_shapeTest = shape;
-
+		m_shapeTarget.setSize(sf::Vector2f((float)m_length, (float)m_width));
+		m_shapeTarget.setOutlineColor(sf::Color(0, 0, 0));
+		m_shapeTarget.setOutlineThickness(1);
+		m_shapeTarget.setOrigin(sf::Vector2f((float)m_length * 0.5f, (float)m_width * 0.5f));
 		if (m_target)
 		{
-			shape.setPosition(sf::Vector2f(m_target->getX(), m_target->getY()));
-			shape.setRotation(-degre(m_target->getangle()) - 90);
+			m_shapeTarget.setPosition(sf::Vector2f(m_target->getX(), m_target->getY()));
+			m_shapeTarget.setRotation(-degre(m_target->getangle()) - 90);
 		}
-		shape.setFillColor(sf::Color(0, 0, 255, 150));
+		switch (team)
+		{
+		case (PURPLE):
 
-		m_shapeTarget = shape;
+			m_shapeTarget.setFillColor(sf::Color(0, 0, 255, 150));
+			break;
+
+		case(YELLOW):
+			m_shapeTarget.setFillColor(sf::Color(220, 220, 0, 150));
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	// creation de l'aspect graphique du robot
 	{
-		m_texture.loadFromFile("Ressources/Images/RobotTexture.png");
+		switch (team)
+		{
+		case (PURPLE):
+			m_texture.loadFromFile("Ressources/Images/RobotTextureBlue.png");
+			break;
+
+		case(YELLOW):
+			m_texture.loadFromFile("Ressources/Images/RobotTextureYellow.png");
+			break;
+
+		default:
+			break;
+		}
+		
 		m_sprite.setTexture(m_texture);
 		m_sprite.setOrigin(tailleTextureRobotX * 0.5f, tailleTextureRobotY * 0.5f);
 		m_sprite.setScale((float) taille.x / tailleTextureRobotX, (float)taille.y / tailleTextureRobotY);
 	}
 
-	switch (team)
-	{
-	case (PURPLE):
-		m_shape.setFillColor(sf::Color::Magenta);
-		break;
-	case(YELLOW):
-		m_shape.setFillColor(sf::Color::Yellow);
-		break;
-	default:
-		break;
-	}
+	m_IAPthfinding = new AlgoGen(nbRobots, m_pos, sf::Vector2f(m_length, m_width), m_maxAcceleration, m_maxDeceleration, m_maxSpeed, m_terrain);
 
-	m_IAPthfinding = new AlgoGen(nbRobots);
-	m_posOtherRobot.push_back(new Point);
+	for (int i = 0; i < nbRobots - 1; ++i)
+		m_posOtherRobot.push_back(new Point(0.f, 0.f, 0.f));
 }
 
 robot::~robot()
@@ -91,10 +100,11 @@ robot::~robot()
 	for (size_t i = 0; i < m_posOtherRobot.size(); ++i)
 	{
 		delete m_posOtherRobot[i];
+		m_posOtherRobot[i] = NULL;
 	}
-	
-	if (m_target)
-		delete m_target;
+
+	if (this->m_target)
+		delete this->m_target;
 }
 
 void robot::update(const float dt)
@@ -105,17 +115,18 @@ void robot::update(const float dt)
 		m_delay = 0.f;
 
 		if (!m_target)
+		{
 			setTarget(Point(1000.f, 500.f, 0.f));
+			retarget();
+		}
 
-		frottements(dt);
+		//frottements(dt);
 
 		actualise_position(m_rightSpeed, m_leftSpeed);
-
-		m_shape.setPosition(sf::Vector2f(m_pos.getX(), m_pos.getY()));
-		m_shape.setRotation(-degre(m_pos.getangle()) - 90);
 	}
 	else
 	{
+		std::cout << "stop" << std::endl;
 		m_delay -= dt * 1000.f;
 		if (m_delay < 0.f)
 			m_delay = 0.f;
@@ -232,8 +243,23 @@ bool robot::delay()
 	return false;
 }
 
-void robot::play(float time_available)
+void robot::updatePosOtherRobots(const std::vector<Point>& posRobots)
 {
+	int ind = 0;
+	for (size_t i = 0; i < posRobots.size(); ++i)
+	{
+		if (this->m_pos != posRobots[i])
+		{
+			*this->m_posOtherRobot[ind] = posRobots[i];
+			++ind;
+		}
+	}
+}
+
+void robot::play(float time_available, const std::vector<Point>& posRobots)
+{
+	updatePosOtherRobots(posRobots);
+
 	if (m_target)
 		m_IAPthfinding->run(time_available, m_rightSpeed, m_leftSpeed, m_pos, *m_target, m_posOtherRobot);
 	else
@@ -242,7 +268,7 @@ void robot::play(float time_available)
 		m_leftSpeed = 0;
 	}
 
-	if (m_target && reachTarget())
+	if (m_target && reachTarget() && m_delay <= 0.f)
 	{
 		retarget();
 	}
@@ -250,7 +276,6 @@ void robot::play(float time_available)
 
 void robot::render(sf::RenderTarget& target)
 {
-	//target.draw(m_shape);
 	m_sprite.setPosition(m_pos.getX(), m_pos.getY()); 
 	m_sprite.setRotation(-degre(m_pos.getangle()) - 90);
 
@@ -263,10 +288,25 @@ void robot::render(sf::RenderTarget& target)
 	m_IAPthfinding->render(target);
 }
 
+std::string robot::posString() const
+{
+	return std::to_string((int)round(m_pos.getX())) + (string) ", " + std::to_string((int)round(m_pos.getY()));
+}
+
+std::string robot::pathFindingString() const
+{
+	return m_IAPthfinding->stateString();
+}
+
+std::string robot::speedString() const
+{
+	return (string) "vitesse roue droite : " + std::to_string((int)(m_rightSpeed * 10.f)) + (string) ", roue gauche : " + std::to_string((int)(m_leftSpeed * 10.f));
+}
+
 bool robot::reachTarget()
 {
-	return (dist(m_target->getX() - m_pos.getX(), m_target->getY() - m_pos.getY()) < 13
-		&& val_abs(properAngleRad(m_target->getangle() - m_pos.getangle())) < 0.05
+	return (dist(m_target->getX() - m_pos.getX(), m_target->getY() - m_pos.getY()) < 30
+		&& val_abs(properAngleRad(m_target->getangle() - m_pos.getangle())) < 0.05f
 		&& val_abs(m_rightSpeed) < 0.1f
 		&& val_abs(m_leftSpeed) < 0.1f);
 }
@@ -292,11 +332,14 @@ void robot::deleteTarget()
 
 void robot::retarget()
 {
-	float x = (float)(rand()) * 1150 / RAND_MAX + 200;
-	float y = (float)(rand()) * 400 / RAND_MAX + 200;
+	float x = (float)(rand()) * CmToPx(tableLength + 20.f) / RAND_MAX + 230.f;
+	float y = (float)(rand()) * CmToPx(tableWidth - 20.f) / RAND_MAX + 200.f;
 	float ang = ((float)(rand()) / RAND_MAX - 0.5f) * PI;
-
+	
 	m_target->Setall(x, y, ang);
+	
+
+	m_delay = 1000.f;
 
 	m_shapeTarget.setPosition(sf::Vector2f(m_target->getX(), m_target->getY()));
 	m_shapeTarget.setRotation(-degre(m_target->getangle()) - 90);

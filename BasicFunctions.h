@@ -24,5 +24,17 @@ float xconv(int x);
 float yconv(int y);
 float aconv(int angle);
 
+float xconv2(int x);
+
 float CmToPx(float dist);
+
+Point operator+(Point const& a, Point const& b);
+
+Point operator-(Point const& a, Point const& b);
+
+Point operator*(float const t, Point const& a);
+
+Point operator*(Point const& a, float const t);
+
+bool operator!=(Point const& a, Point const& b);
 

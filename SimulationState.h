@@ -2,15 +2,19 @@
 
 #include"State.h"
 #include"Robot.h"
+#include"Gobelet.h"
 #include"constantes.h"
 #include"Terrain.h"
 #include"PauseMenu.h"
+#include"InfoRobot.h"
 
 class SimulationState
 	: public State
 {
 private:
 	// variables
+	bool debug;
+
 	sf::Font pauseMenuFont;
 	PauseMenu* pauseMenu;
 
@@ -31,21 +35,24 @@ private:
 	std::vector <robot*> m_robotTeamYellow;
 	std::vector <robot*> m_robotTeamPurple;
 
+	std::vector <Gobelet> m_gobelets;
+
+	std::vector <InfoRobot> infoRobot;
+
 	//Point* posRobots;
 
 	const sf::Vector2f cmToPx;
 
 	// private functions
 	virtual void initKeybinds();
-	void initBackGround();
 	void initRobot(sf::RenderWindow* window);
+	void initGobelets();
 	void initPauseMenu();
 	void initFont();
 
 	void resetPauseMenu();
 	void updatePauseMenuTextButtons();
 
-	void updatePosRobots();
 	void updateRobots(const float& dt);
 
 public:
